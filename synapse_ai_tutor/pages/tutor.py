@@ -25,6 +25,20 @@ from backend.voice_components import (
     render_tts_settings,
 )
 
+# Student Digital Twin — defensive import (app never breaks if module fails)
+try:
+    from backend.student_memory import (
+        add_message        as _mem_add_message,
+        get_recent_messages,
+        generate_student_summary,
+    )
+    _MEMORY_AVAILABLE = True
+except Exception:
+    _MEMORY_AVAILABLE = False
+    def _mem_add_message(*a, **kw):        pass
+    def get_recent_messages(*a, **kw):    return []
+    def generate_student_summary(*a, **kw): return {}
+
 LEVEL_COLORS = {"Beginner": "#2ECC71", "Intermediate": "#F39C12", "Advanced": "#8B83FF"}
 
 
@@ -202,8 +216,13 @@ def _render_chat(topic, level, mastery, knowledge_gaps, username):
     user_q  = typed_q or voice_transcript  # voice wins if both arrive simultaneously
 
     if user_q:
+        # ── Capture conversation context BEFORE adding current message ──────────
+        # (so the LLM sees prior exchanges, not the question it’s about to answer)
+        recent_ctx = get_recent_messages(username, topic, n=4)
+
         chat_history.append({"role": "user", "content": user_q, "sources": []})
         st.session_state.chat_histories[topic] = chat_history
+        _mem_add_message(username, topic, "user", user_q)  # persist to student memory
 
         with st.chat_message("user", avatar="user"):
             st.markdown(user_q)
@@ -218,6 +237,9 @@ def _render_chat(topic, level, mastery, knowledge_gaps, username):
                     except Exception:
                         retrieved = []
 
+                # ── Student Digital Twin — inject personalisation into prompt ───
+                summary = generate_student_summary(username)
+
                 response = generate_tutoring_response(
                     topic=topic,
                     level=level,
@@ -226,6 +248,10 @@ def _render_chat(topic, level, mastery, knowledge_gaps, username):
                     student_question=user_q,
                     mastery=mastery,
                     model=None,
+                    weak_topics=summary.get("weak_topics"),
+                    strong_topics=summary.get("strong_topics"),
+                    recent_mistakes=summary.get("recent_mistakes"),
+                    recent_context=recent_ctx,
                 )
 
             full_text = response.get("full_response", response.get("explanation", ""))
@@ -268,6 +294,7 @@ def _render_chat(topic, level, mastery, knowledge_gaps, username):
 
             chat_history.append({"role": "assistant", "content": full_text, "sources": sources})
             st.session_state.chat_histories[topic] = chat_history
+            _mem_add_message(username, topic, "assistant", full_text)  # persist to student memory
 
     if not chat_history:
         suggestions = _get_suggestions(topic)

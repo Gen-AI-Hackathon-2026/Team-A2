@@ -96,7 +96,12 @@ def generate_tutoring_response(
     retrieved_chunks: list,
     student_question: str,
     mastery: int = 0,
-    model: str = None
+    model: str = None,
+    # ── Digital Twin injection (optional) — from student_memory.py —————————
+    weak_topics: list | None = None,
+    strong_topics: list | None = None,
+    recent_mistakes: list | None = None,
+    recent_context: list | None = None,
 ) -> dict:
     """
     Generate a comprehensive adaptive tutoring response.
@@ -129,11 +134,45 @@ def generate_tutoring_response(
 
     mastery_text = f"\nCurrent Mastery: {mastery}%" if mastery > 0 else ""
 
+    # ── Digital Twin section (only injected when data is available) ———————
+    twin_lines: list[str] = []
+    if weak_topics:
+        twin_lines.append(
+            f"Weak Topics (needs more reinforcement): {', '.join(weak_topics)}"
+        )
+    if strong_topics:
+        twin_lines.append(
+            f"Strong Topics (already mastered): {', '.join(strong_topics)}"
+        )
+    if recent_mistakes:
+        twin_lines.append(
+            f"Past Struggles (previously got wrong): {', '.join(recent_mistakes)}"
+        )
+    twin_section = (
+        "\n=== Student Digital Twin ===\n" + "\n".join(twin_lines) + "\n"
+        if twin_lines else ""
+    )
+
+    # ── Recent conversation context (last 4 turns) ——————————————————
+    context_section = ""
+    if recent_context:
+        ctx_lines: list[str] = []
+        for msg in recent_context[-4:]:
+            speaker = "Student" if msg.get("role") == "user" else "Tutor"
+            snippet = msg.get("content", "")[:200].replace("\n", " ")
+            ctx_lines.append(f"{speaker}: {snippet}")
+        if ctx_lines:
+            context_section = (
+                "\n=== Recent Conversation Context ===\n"
+                + "\n".join(ctx_lines)
+                + "\n"
+            )
+
     system_prompt = f"""You are Synapse, an expert adaptive AI tutor.
 
 === Student Profile ===
 Topic: {topic}
-Level: {level}{mastery_text}{gaps_text}
+Level: {level}{mastery_text}{gaps_text}{twin_section}{context_section}
 
 === Adaptive Teaching Rules ===
 {level_instructions}

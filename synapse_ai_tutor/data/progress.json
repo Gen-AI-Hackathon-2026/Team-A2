@@ -68,6 +68,24 @@
       "sessions": 1,
       "last_accessed": "2026-05-31T00:47:16.116005",
       "completed": true
+    },
+    "GANs": {
+      "mastery": 0,
+      "level": "Not Assessed",
+      "score": 0,
+      "max_score": 30,
+      "knowledge_gaps": [
+        "Neural Networks",
+        "Optimization",
+        "Loss Functions",
+        "Probability Distributions",
+        "Backpropagation"
+      ],
+      "assessment_history": [],
+      "practice_history": [],
+      "sessions": 0,
+      "last_accessed": "2026-05-31T03:34:46.230975",
+      "completed": false
     }
   }
 }

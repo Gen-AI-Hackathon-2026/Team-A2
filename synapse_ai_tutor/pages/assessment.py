@@ -305,6 +305,9 @@ def _submit_assessment(questions, topic):
     result   = calculate_score(answers, questions)
     gaps     = _compute_gaps(answers, questions, topic)
 
+    # ── Capture mastery BEFORE the update (needed for learning event delta) ───
+    mastery_before = get_topic_progress(username, topic).get("mastery", 0)
+
     update_assessment_score(
         username=username,
         topic=topic,
@@ -314,10 +317,50 @@ def _submit_assessment(questions, topic):
         knowledge_gaps=gaps,
     )
 
+    # ── Capture mastery AFTER the update ─────────────────────────────────────
+    mastery_after = get_topic_progress(username, topic).get("mastery", 0)
+
+    # ── Record in Student Digital Twin (non-blocking) ─────────────────────────
+    try:
+        from backend.student_memory import add_quiz_result, add_learning_event
+
+        quiz_pct = (
+            int((result["score"] / result["max_score"]) * 100)
+            if result.get("max_score", 0) > 0 else 0
+        )
+
+        add_quiz_result(
+            username=username,
+            topic=topic,
+            score=result["score"],
+            max_score=result["max_score"],
+            correct=result["correct"],
+            total=result["total"],
+            level_achieved=result["level"],
+            mistakes=gaps,                  # knowledge gaps = concepts missed
+        )
+
+        add_learning_event(
+            username=username,
+            topic=topic,
+            event_type="quiz_completed",
+            mistakes=gaps,                  # ← always present on every event
+            quiz_score=quiz_pct,
+            mastery_before=mastery_before,
+            mastery_after=mastery_after,
+        )
+    except Exception as exc:
+        # Log but never block assessment submission
+        import logging
+        logging.getLogger(__name__).warning(
+            f"[Assessment] student_memory update failed (non-fatal): {exc}"
+        )
+
     result["knowledge_gaps"] = gaps
     st.session_state.assessment_result   = result
     st.session_state.assessment_complete = True
     st.rerun()
+
 
 
 def _compute_gaps(answers, questions, topic) -> list:
