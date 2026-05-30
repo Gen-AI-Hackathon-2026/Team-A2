@@ -462,33 +462,25 @@ def generate_cytoscape_html(
 ) -> str:
     """
     Generate a self-contained HTML string that renders the graph with
-    Cytoscape.js (loaded from CDN — no pip install required).
-
-    Can be called as:
-        generate_cytoscape_html(username=u, height="600px")          # full graph
-        generate_cytoscape_html(username=u, height="550px",          # topic graph
-                                graph_data=topic_graph_data)
-
-    Args:
-        graph_data: dict from build_full_graph() or build_topic_graph().
-                    If None, builds the full curriculum graph for username.
-        height:     Height in pixels (int) or CSS string like "600px".
-        username:   Used to build the graph if graph_data is not provided.
-
-    Returns:
-        HTML string suitable for st.components.v1.html().
+    Cytoscape.js. Libraries are INLINED (not loaded from CDN) so they
+    work inside Streamlit's sandboxed iframe.
     """
     # Auto-build graph data if not supplied
     if graph_data is None:
         graph_data = build_full_graph(username)
 
-    # Normalise height: accept int (550) or string ('550px' or '550')
+    # Normalise height
     if isinstance(height, str):
         height_px = int(height.replace('px', '').strip())
     else:
         height_px = int(height)
 
     elements_js = _build_elements_js(graph_data)
+
+    # Read inlined JS libraries
+    static_dir = os.path.join(os.path.dirname(__file__), '..', 'static')
+    cyto_js = _read_static(os.path.join(static_dir, 'cytoscape.min.js'))
+    bilkent_js = _read_static(os.path.join(static_dir, 'cytoscape-cose-bilkent.js'))
 
     return f"""<!DOCTYPE html>
 <html>
@@ -517,45 +509,31 @@ def generate_cytoscape_html(
 <body>
 <div id="cy"></div>
 <div id="tooltip"></div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.28.1/cytoscape.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/cytoscape-cose-bilkent@4.1.0/cytoscape-cose-bilkent.js"></script>
+<script>{cyto_js}</script>
+<script>{bilkent_js}</script>
 <script>
-  // Register the plugin if it loaded
+  // Register cose-bilkent plugin
   if (typeof cytoscapeCoseBilkent !== 'undefined') {{
     cytoscape.use(cytoscapeCoseBilkent);
   }}
 
   var elements = {elements_js};
 
-  // Pick layout — use cose-bilkent if available, else built-in cose
-  var layoutConfig;
-  if (typeof cytoscapeCoseBilkent !== 'undefined') {{
-    layoutConfig = {{
-      name: 'cose-bilkent',
-      quality: 'proof',
-      nodeDimensionsIncludeLabels: true,
-      idealEdgeLength: 150,
-      nodeRepulsion: 6000,
-      edgeElasticity: 0.45,
-      gravity: 0.35,
-      numIter: 2000,
-      animate: 'end',
-      animationDuration: 700,
-      fit: true, padding: 40, randomize: true,
-    }};
-  }} else {{
-    layoutConfig = {{
-      name: 'cose',
-      nodeDimensionsIncludeLabels: true,
-      idealEdgeLength: function(){{ return 120; }},
-      nodeRepulsion: function(){{ return 5000; }},
-      gravity: 0.4,
-      numIter: 1000,
-      animate: true,
-      animationDuration: 500,
-      fit: true, padding: 40, randomize: true,
-    }};
-  }}
+  var layoutCfg = (typeof cytoscapeCoseBilkent !== 'undefined')
+    ? {{
+        name: 'cose-bilkent', quality: 'proof',
+        nodeDimensionsIncludeLabels: true, idealEdgeLength: 150,
+        nodeRepulsion: 6000, edgeElasticity: 0.45, gravity: 0.35,
+        numIter: 2000, animate: 'end', animationDuration: 700,
+        fit: true, padding: 40, randomize: true,
+      }}
+    : {{
+        name: 'cose', nodeDimensionsIncludeLabels: true,
+        idealEdgeLength: function(){{ return 120; }},
+        nodeRepulsion: function(){{ return 5000; }},
+        gravity: 0.4, numIter: 1000, animate: true,
+        animationDuration: 500, fit: true, padding: 40, randomize: true,
+      }};
 
   var cy = cytoscape({{
     container: document.getElementById('cy'),
@@ -568,32 +546,22 @@ def generate_cytoscape_html(
             var m = ele.data('mastery');
             return m >= 76 ? '#2ECC71' : (m > 0 ? '#F39C12' : '#3A3A5C');
           }},
-          'label': 'data(label)',
-          'color': '#FFFFFF',
-          'font-size': '10px',
-          'font-family': 'Inter, sans-serif',
-          'font-weight': '600',
-          'text-valign': 'bottom',
-          'text-margin-y': 6,
-          'text-wrap': 'wrap',
-          'text-max-width': '90px',
-          'text-outline-color': '#0A0A1A',
-          'text-outline-width': 2,
+          'label': 'data(label)', 'color': '#FFFFFF',
+          'font-size': '10px', 'font-family': 'Inter, sans-serif',
+          'font-weight': '600', 'text-valign': 'bottom', 'text-margin-y': 6,
+          'text-wrap': 'wrap', 'text-max-width': '90px',
+          'text-outline-color': '#0A0A1A', 'text-outline-width': 2,
           'width': 38, 'height': 38,
-          'border-width': 2.5,
-          'border-color': '#6C63FF',
-          'shadow-blur': 15,
-          'shadow-color': 'rgba(108,99,255,0.35)',
+          'border-width': 2.5, 'border-color': '#6C63FF',
+          'shadow-blur': 15, 'shadow-color': 'rgba(108,99,255,0.35)',
           'shadow-offset-x': 0, 'shadow-offset-y': 0, 'shadow-opacity': 1,
         }}
       }},
       {{
         selector: 'node[group="prerequisite"]',
         style: {{
-          'background-color': '#6B6B8D',
-          'label': 'data(label)',
-          'color': '#A0A0C0',
-          'font-size': '8px',
+          'background-color': '#6B6B8D', 'label': 'data(label)',
+          'color': '#A0A0C0', 'font-size': '8px',
           'text-valign': 'bottom', 'text-margin-y': 5,
           'text-wrap': 'wrap', 'text-max-width': '75px',
           'text-outline-color': '#0A0A1A', 'text-outline-width': 1.5,
@@ -604,10 +572,8 @@ def generate_cytoscape_html(
       {{
         selector: 'node[group="concept"]',
         style: {{
-          'background-color': '#1A1A4E',
-          'label': 'data(label)',
-          'color': '#A0A0C0',
-          'font-size': '8px',
+          'background-color': '#1A1A4E', 'label': 'data(label)',
+          'color': '#A0A0C0', 'font-size': '8px',
           'text-valign': 'bottom', 'text-margin-y': 5,
           'text-wrap': 'wrap', 'text-max-width': '80px',
           'text-outline-color': '#0A0A1A', 'text-outline-width': 1.5,
@@ -618,10 +584,8 @@ def generate_cytoscape_html(
       {{
         selector: 'node[group="gap"]',
         style: {{
-          'background-color': '#E74C3C',
-          'label': 'data(label)',
-          'color': '#FFFFFF',
-          'font-size': '8px',
+          'background-color': '#E74C3C', 'label': 'data(label)',
+          'color': '#FFFFFF', 'font-size': '8px',
           'text-valign': 'bottom', 'text-margin-y': 5,
           'text-wrap': 'wrap', 'text-max-width': '80px',
           'text-outline-color': '#0A0A1A', 'text-outline-width': 1.5,
@@ -644,10 +608,8 @@ def generate_cytoscape_html(
       {{
         selector: 'edge[type="related"]',
         style: {{
-          'width': 1,
-          'line-color': 'rgba(0,210,255,0.25)',
-          'line-style': 'dashed',
-          'target-arrow-shape': 'none',
+          'width': 1, 'line-color': 'rgba(0,210,255,0.25)',
+          'line-style': 'dashed', 'target-arrow-shape': 'none',
           'curve-style': 'bezier', 'opacity': 0.5,
         }}
       }},
@@ -669,23 +631,15 @@ def generate_cytoscape_html(
           'z-index': 10,
         }}
       }},
-      {{
-        selector: 'node.faded',
-        style: {{ 'opacity': 0.15 }}
-      }},
+      {{ selector: 'node.faded', style: {{ 'opacity': 0.15 }} }},
       {{
         selector: 'edge.highlighted',
-        style: {{
-          'width': 3, 'opacity': 1,
-          'line-color': '#6C63FF', 'target-arrow-color': '#6C63FF',
-        }}
+        style: {{ 'width': 3, 'opacity': 1,
+          'line-color': '#6C63FF', 'target-arrow-color': '#6C63FF' }}
       }},
-      {{
-        selector: 'edge.faded',
-        style: {{ 'opacity': 0.06 }}
-      }},
+      {{ selector: 'edge.faded', style: {{ 'opacity': 0.06 }} }},
     ],
-    layout: layoutConfig,
+    layout: layoutCfg,
     minZoom: 0.3, maxZoom: 3, wheelSensitivity: 0.3,
   }});
 
@@ -725,6 +679,16 @@ def generate_cytoscape_html(
 </script>
 </body>
 </html>"""
+
+
+def _read_static(path: str) -> str:
+    """Read a static JS file for inlining. Returns empty string on failure."""
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            return f.read()
+    except Exception:
+        return ''
+
 
 
 def _build_elements_js(graph_data: dict) -> str:
