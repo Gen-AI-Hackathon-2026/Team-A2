@@ -1,6 +1,12 @@
 """
 Chatbot Page for Synapse AI Tutor.
 General-purpose AI learning assistant with PDF upload and RAG support.
+
+Voice Layer
+-----------
+STT  : faster-whisper ΓåÆ openai-whisper fallback  (via backend/stt.py)
+TTS  : ElevenLabs ΓåÆ gTTS fallback                (via backend/tts.py)
+UI   : shared mic + audio-player widgets          (via backend/voice_components.py)
 """
 
 import streamlit as st
@@ -9,6 +15,11 @@ import faiss
 
 from backend.llm_client import generate_response, check_connection
 from backend.embeddings import get_embedding_model
+from backend.voice_components import (
+    render_voice_input,
+    render_tts_controls,
+    render_tts_settings,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -68,7 +79,7 @@ def render_chatbot():
         """
 <div class="main-header fade-in">
     <h1>AI Chatbot</h1>
-    <p>General learning assistant — ask anything about AI, ML, and deep learning</p>
+    <p>General learning assistant ΓÇö ask anything about AI, ML, and deep learning</p>
 </div>
 """,
         unsafe_allow_html=True,
@@ -85,7 +96,7 @@ def render_chatbot():
         if key not in st.session_state:
             st.session_state[key] = default
 
-    # ── Status bar ────────────────────────────────────────────────────────────
+    # ΓöÇΓöÇ Status bar ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
     try:
         connected = check_connection()
     except Exception:
@@ -118,7 +129,7 @@ def render_chatbot():
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # ── Two-column layout ─────────────────────────────────────────────────────
+    # ΓöÇΓöÇ Two-column layout ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
     chat_col, pdf_col = st.columns([3, 1])
     with pdf_col:
         _render_pdf_panel()
@@ -210,28 +221,49 @@ def _render_pdf_panel():
 
 # ---------------------------------------------------------------------------
 def _render_chat_interface():
-    st.markdown(
-        '<div style="font-weight:600;color:#FFFFFF;font-size:0.85rem;margin-bottom:0.7rem;">Chat</div>',
-        unsafe_allow_html=True,
-    )
+    # ΓöÇΓöÇ Header row: title + TTS auto-play toggle ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    hdr_col, tgl_col = st.columns([3, 2])
+    with hdr_col:
+        st.markdown(
+            '<div style="font-weight:600;color:#FFFFFF;font-size:0.85rem;margin-bottom:0.4rem;">Chat</div>',
+            unsafe_allow_html=True,
+        )
+    with tgl_col:
+        auto_play = render_tts_settings(page_key="chatbot")
+
+    # ΓöÇΓöÇ Voice input widget ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    voice_transcript = render_voice_input(page_key="chatbot")
+
+    st.markdown("""
+    <div style="border-bottom:1px solid rgba(108,99,255,0.12);margin-bottom:0.6rem;"></div>
+    """, unsafe_allow_html=True)
 
     chat_history = st.session_state.chatbot_history
 
-    for msg in chat_history:
+    for idx, msg in enumerate(chat_history):
         with st.chat_message(msg["role"], avatar="user" if msg["role"] == "user" else "assistant"):
             st.markdown(msg["content"])
-            if msg["role"] == "assistant" and msg.get("sources"):
-                with st.expander(f"Sources ({len(msg['sources'])} passages)", expanded=False):
-                    for src in msg["sources"]:
-                        st.markdown(
-                            f'<div class="source-citation"><div><span class="source-book">{src["source"]}</span>'
-                            f'<span class="source-page"> - Page {src["page"]}</span></div>'
-                            f'<div style="color:#6B6B8D;font-size:0.72rem;margin-top:0.25rem;font-style:italic;line-height:1.4;">'
-                            f'{src["text"][:240]}...</div></div>',
-                            unsafe_allow_html=True,
-                        )
+            if msg["role"] == "assistant":
+                render_tts_controls(
+                    response_text=msg["content"],
+                    page_key="chatbot",
+                    message_index=idx,
+                    auto_play=False,  # History messages never auto-play
+                )
+                if msg.get("sources"):
+                    with st.expander(f"Sources ({len(msg['sources'])} passages)", expanded=False):
+                        for src in msg["sources"]:
+                            st.markdown(
+                                f'<div class="source-citation"><div><span class="source-book">{src["source"]}</span>'
+                                f'<span class="source-page"> - Page {src["page"]}</span></div>'
+                                f'<div style="color:#6B6B8D;font-size:0.72rem;margin-top:0.25rem;font-style:italic;line-height:1.4;">'
+                                f'{src["text"][:240]}...</div></div>',
+                                unsafe_allow_html=True,
+                            )
 
-    user_input = st.chat_input("Ask anything about AI, ML, or your uploaded PDF...", key="chatbot_input")
+    # ΓöÇΓöÇ Determine user input: typed text OR voice transcript ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    typed_input = st.chat_input("Ask anything about AI, ML, or your uploaded PDFΓÇª", key="chatbot_input")
+    user_input  = typed_input or voice_transcript
 
     if user_input:
         chat_history.append({"role": "user", "content": user_input, "sources": []})
@@ -287,6 +319,15 @@ def _render_chat_interface():
                     )
 
             st.markdown(response)
+
+            # ΓöÇΓöÇ TTS for the fresh response ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+            new_msg_idx = len(chat_history)
+            render_tts_controls(
+                response_text=response,
+                page_key="chatbot",
+                message_index=new_msg_idx,
+                auto_play=auto_play,
+            )
 
             if sources:
                 with st.expander(f"Sources ({len(sources)} passages retrieved)", expanded=True):
