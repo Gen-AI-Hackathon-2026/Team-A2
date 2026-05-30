@@ -18,7 +18,6 @@ openai-whisper>=20231117        # FALLBACK STT: pure Python (no extra ffmpeg nee
 # TTS — Text-to-Speech (local / free)
 gTTS>=2.3.2                    # PRIMARY TTS: Google TTS, free, no API key
 pydub>=0.25.1                  # Audio chunking + MP3 concatenation
-audioop-lts>=0.2.1             # Python 3.13 compat shim for pydub (audioop removed in 3.13)
 soundfile>=0.12.1              # Audio file I/O (used by Whisper backends)
 
 # ── Optional Cloud Accelerators (not required for hackathon) ─────────────────

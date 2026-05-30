@@ -96,13 +96,19 @@ def generate_tutoring_response(
     retrieved_chunks: list,
     student_question: str,
     mastery: int = 0,
-    model: str = None
+    model: str = None,
+    # Student Digital Twin — all optional, safe to omit
+    weak_topics: list = None,
+    strong_topics: list = None,
+    recent_mistakes: list = None,
+    recent_context: list = None,
 ) -> dict:
     """
     Generate a comprehensive adaptive tutoring response.
 
-    Injects topic, level, mastery, and knowledge gaps into the prompt.
-    Falls back gracefully to RAG-only content if LLM is unavailable.
+    Injects topic, level, mastery, knowledge gaps, and optional student
+    memory (weak/strong topics, recent mistakes, conversation context)
+    into the system prompt for personalised tutoring.
 
     Returns:
         dict with keys: explanation, analogy, example, practice_questions,
@@ -129,15 +135,34 @@ def generate_tutoring_response(
 
     mastery_text = f"\nCurrent Mastery: {mastery}%" if mastery > 0 else ""
 
+    # Student Digital Twin personalisation (optional)
+    twin_text = ""
+    if weak_topics:
+        twin_text += f"\nWeak Topics (reinforce these): {', '.join(weak_topics[:5])}"
+    if strong_topics:
+        twin_text += f"\nStrong Topics (already mastered): {', '.join(strong_topics[:5])}"
+    if recent_mistakes:
+        twin_text += f"\nRecent Mistakes (address proactively): {', '.join(recent_mistakes[:6])}"
+
+    # Recent conversation context for continuity
+    context_block = ""
+    if recent_context:
+        ctx_lines = []
+        for msg in recent_context[-4:]:
+            role = "Student" if msg.get("role") == "user" else "Tutor"
+            ctx_lines.append(f"{role}: {msg.get('content', '')[:200]}")
+        if ctx_lines:
+            context_block = "\n=== Recent Conversation ===\n" + "\n".join(ctx_lines) + "\n"
+
     system_prompt = f"""You are Synapse, an expert adaptive AI tutor.
 
 === Student Profile ===
 Topic: {topic}
-Level: {level}{mastery_text}{gaps_text}
+Level: {level}{mastery_text}{gaps_text}{twin_text}
 
 === Adaptive Teaching Rules ===
 {level_instructions}
-
+{context_block}
 === Reference Material (from textbooks) ===
 {context_text if context_text else "No textbook content retrieved for this query."}
 
