@@ -406,7 +406,7 @@ The RAG pipeline is pre-indexed over three textbooks:
 | `Understanding Deep Learning.pdf` | Comprehensive deep learning theory |
 
 The assessment question bank uses `manus-dataset.jsonl` — a curated
-multiple-choice dataset covering all 10 topics at three difficulty levels.
+multiple-choice dataset covering all 10 topics at three difficulty levels
 
 ---
 
