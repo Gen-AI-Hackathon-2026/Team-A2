@@ -1,7 +1,7 @@
 """
 Progress Tracking module for Synapse AI Tutor.
-Stores and retrieves student progress data using JSON.
-All tracking is topic-specific.
+Enhanced to fully persist user profiles, assessment history,
+knowledge gaps, mastery scores, and practice performance across sessions.
 """
 
 import json
@@ -29,181 +29,220 @@ def _save_progress(data: dict):
         json.dump(data, f, indent=2, ensure_ascii=False)
 
 
+def _default_topic_data() -> dict:
+    """Return default structure for a new topic entry."""
+    return {
+        "mastery": 0,
+        "level": "Not Assessed",
+        "score": 0,
+        "max_score": 30,
+        "knowledge_gaps": [],
+        "assessment_history": [],
+        "practice_history": [],
+        "sessions": 0,
+        "last_accessed": None,
+        "completed": False
+    }
+
+
+# ── Profile Loading ──────────────────────────────────────────────────────────
+
+def load_user_profile(username: str) -> dict:
+    """
+    Load the complete persistent profile for a user.
+    Returns the full profile dict (all topics, all history).
+    """
+    data = _load_progress()
+    if username not in data:
+        data[username] = {}
+        _save_progress(data)
+    return data[username]
+
+
 def get_user_progress(username: str) -> dict:
-    """
-    Get all progress data for a specific user.
-    
-    Args:
-        username: The username
-        
-    Returns:
-        Dictionary of topic-specific progress data
-    """
+    """Get all progress data for a specific user."""
     data = _load_progress()
     return data.get(username, {})
 
 
 def get_topic_progress(username: str, topic: str) -> dict:
-    """
-    Get progress data for a specific user and topic.
-    
-    Args:
-        username: The username
-        topic: The topic name
-        
-    Returns:
-        Dictionary with mastery, level, scores, etc.
-    """
+    """Get progress data for a specific user and topic."""
     user_data = get_user_progress(username)
-    return user_data.get(topic, {
-        "mastery": 0,
-        "level": "Not Assessed",
-        "scores": [],
-        "weak_areas": [],
-        "sessions": 0,
-        "last_accessed": None
-    })
+    entry = user_data.get(topic, {})
+    if not entry:
+        return _default_topic_data()
+    # Backfill any missing keys from default
+    default = _default_topic_data()
+    for k, v in default.items():
+        entry.setdefault(k, v)
+    return entry
 
 
-def update_assessment_score(username: str, topic: str, score: int, level: str):
+# ── Assessment Persistence ────────────────────────────────────────────────────
+
+def update_assessment_score(username: str, topic: str, score: int, max_score: int, level: str, knowledge_gaps: list = None):
     """
     Update the assessment score for a user's topic.
-    
-    Args:
-        username: The username
-        topic: The topic name
-        score: The assessment score (0-100)
-        level: The determined level (Beginner/Intermediate/Advanced)
+    Persists score, level, gaps, and history entry.
     """
     data = _load_progress()
-    
+
     if username not in data:
         data[username] = {}
-    
+
     if topic not in data[username]:
-        data[username][topic] = {
-            "mastery": 0,
-            "level": "Not Assessed",
-            "scores": [],
-            "weak_areas": [],
-            "sessions": 0,
-            "last_accessed": None,
-            "completed": False
-        }
-    
-    topic_data = data[username][topic]
-    topic_data["scores"].append(score)
-    topic_data["level"] = level
-    
-    # Calculate mastery as weighted average (recent scores weighted more)
-    scores = topic_data["scores"]
-    if len(scores) == 1:
-        topic_data["mastery"] = score
+        data[username][topic] = _default_topic_data()
+
+    td = data[username][topic]
+    td["score"] = score
+    td["max_score"] = max_score
+    td["level"] = level
+    td["knowledge_gaps"] = knowledge_gaps or td.get("knowledge_gaps", [])
+
+    # Compute mastery as 0–100 percentage of max_score
+    td["mastery"] = int((score / max_score) * 100) if max_score > 0 else 0
+
+    # Append to history
+    history_entry = {
+        "date": datetime.now().isoformat(),
+        "score": score,
+        "max_score": max_score,
+        "level": level,
+        "mastery": td["mastery"]
+    }
+    td.setdefault("assessment_history", []).append(history_entry)
+
+    td["last_accessed"] = datetime.now().isoformat()
+    td["sessions"] = td.get("sessions", 0) + 1
+    td["completed"] = td["mastery"] >= 76
+
+    _save_progress(data)
+
+
+def update_knowledge_gaps(username: str, topic: str, gaps: list):
+    """Persist knowledge gaps for a topic."""
+    data = _load_progress()
+    if username not in data:
+        data[username] = {}
+    if topic not in data[username]:
+        data[username][topic] = _default_topic_data()
+    data[username][topic]["knowledge_gaps"] = gaps
+    _save_progress(data)
+
+
+# ── Dynamic Mastery Updates (Practice) ────────────────────────────────────────
+
+def update_mastery_from_practice(username: str, topic: str, correct: int, total: int):
+    """
+    Dynamically update mastery based on practice question performance.
+    Correct answers increase mastery; incorrect answers decrease it slightly.
+    Also narrows knowledge gaps if performance is strong.
+    """
+    data = _load_progress()
+    if username not in data or topic not in data[username]:
+        return
+
+    td = data[username][topic]
+    current_mastery = td.get("mastery", 0)
+
+    if total == 0:
+        return
+
+    accuracy = correct / total  # 0.0 to 1.0
+
+    # Delta: good performance adds up to +8, poor performance subtracts up to -4
+    if accuracy >= 0.8:
+        delta = 8
+    elif accuracy >= 0.6:
+        delta = 4
+    elif accuracy >= 0.4:
+        delta = 1
+    elif accuracy >= 0.2:
+        delta = -2
     else:
-        # Exponential moving average
-        alpha = 0.6
-        mastery = scores[0]
-        for s in scores[1:]:
-            mastery = alpha * s + (1 - alpha) * mastery
-        topic_data["mastery"] = int(mastery)
-    
-    topic_data["last_accessed"] = datetime.now().isoformat()
-    topic_data["sessions"] += 1
-    
-    if topic_data["mastery"] >= 75:
-        topic_data["completed"] = True
-    
+        delta = -4
+
+    new_mastery = max(0, min(100, current_mastery + delta))
+    td["mastery"] = new_mastery
+
+    # Update level based on new mastery
+    if new_mastery >= 77:
+        td["level"] = "Advanced"
+    elif new_mastery >= 43:
+        td["level"] = "Intermediate"
+    else:
+        td["level"] = "Beginner"
+
+    # Reduce knowledge gaps if performance is strong
+    if accuracy >= 0.8 and td.get("knowledge_gaps"):
+        gaps = td["knowledge_gaps"]
+        remove_count = max(1, len(gaps) // 3)
+        td["knowledge_gaps"] = gaps[remove_count:]
+
+    # Log practice
+    practice_entry = {
+        "date": datetime.now().isoformat(),
+        "correct": correct,
+        "total": total,
+        "accuracy": round(accuracy, 2),
+        "mastery_before": current_mastery,
+        "mastery_after": new_mastery,
+        "delta": delta
+    }
+    td.setdefault("practice_history", []).append(practice_entry)
+    td["completed"] = new_mastery >= 76
+
     _save_progress(data)
 
 
-def update_weak_areas(username: str, topic: str, weak_areas: list):
-    """
-    Update the identified weak areas for a user's topic.
-    
-    Args:
-        username: The username
-        topic: The topic name
-        weak_areas: List of weak area strings
-    """
-    data = _load_progress()
-    
-    if username not in data:
-        data[username] = {}
-    
-    if topic not in data[username]:
-        data[username][topic] = {
-            "mastery": 0,
-            "level": "Not Assessed",
-            "scores": [],
-            "weak_areas": [],
-            "sessions": 0,
-            "last_accessed": None
-        }
-    
-    data[username][topic]["weak_areas"] = weak_areas
-    _save_progress(data)
-
+# ── Derived Views ─────────────────────────────────────────────────────────────
 
 def get_mastery_scores(username: str) -> dict:
     """
     Get mastery scores for all topics for a user.
-    Used by the gap detector.
-    
-    Args:
-        username: The username
-        
-    Returns:
-        Dictionary of {topic: {"mastery": score, "level": level}}
+    Returns {topic: {"mastery": int, "level": str, "knowledge_gaps": list}}
     """
     user_data = get_user_progress(username)
     scores = {}
-    for topic, data in user_data.items():
+    for topic, d in user_data.items():
         scores[topic] = {
-            "mastery": data.get("mastery", 0),
-            "level": data.get("level", "Not Assessed")
+            "mastery": d.get("mastery", 0),
+            "level": d.get("level", "Not Assessed"),
+            "knowledge_gaps": d.get("knowledge_gaps", [])
         }
     return scores
 
 
 def get_completed_topics(username: str) -> list:
-    """Get list of topics where mastery >= 75."""
+    """Get list of topics where mastery >= 76."""
     user_data = get_user_progress(username)
-    completed = []
-    for topic, data in user_data.items():
-        if data.get("mastery", 0) >= 75 or data.get("completed", False):
-            completed.append(topic)
-    return completed
+    return [t for t, d in user_data.items() if d.get("mastery", 0) >= 76 or d.get("completed", False)]
 
 
 def get_strengths(username: str) -> list:
     """Get topics where student performs well (mastery >= 60)."""
     user_data = get_user_progress(username)
-    strengths = []
-    for topic, data in user_data.items():
-        if data.get("mastery", 0) >= 60:
-            strengths.append({"topic": topic, "mastery": data["mastery"]})
+    strengths = [
+        {"topic": t, "mastery": d["mastery"]}
+        for t, d in user_data.items() if d.get("mastery", 0) >= 60
+    ]
     return sorted(strengths, key=lambda x: x["mastery"], reverse=True)
 
 
 def get_weak_topics(username: str) -> list:
     """Get topics where student needs improvement (mastery < 50)."""
     user_data = get_user_progress(username)
-    weak = []
-    for topic, data in user_data.items():
-        if 0 < data.get("mastery", 0) < 50:
-            weak.append({"topic": topic, "mastery": data["mastery"]})
+    weak = [
+        {"topic": t, "mastery": d["mastery"]}
+        for t, d in user_data.items() if 0 < d.get("mastery", 0) < 50
+    ]
     return sorted(weak, key=lambda x: x["mastery"])
 
 
 def get_overall_stats(username: str) -> dict:
-    """
-    Get overall statistics for a user.
-    
-    Returns:
-        Dictionary with overall stats
-    """
+    """Get overall statistics for a user."""
     user_data = get_user_progress(username)
-    
+
     if not user_data:
         return {
             "total_topics_attempted": 0,
@@ -213,7 +252,7 @@ def get_overall_stats(username: str) -> dict:
             "strongest_topic": None,
             "weakest_topic": None
         }
-    
+
     masteries = []
     total_sessions = 0
     completed = 0
@@ -221,24 +260,21 @@ def get_overall_stats(username: str) -> dict:
     weakest = None
     max_mastery = -1
     min_mastery = 101
-    
-    for topic, data in user_data.items():
-        mastery = data.get("mastery", 0)
+
+    for topic, d in user_data.items():
+        mastery = d.get("mastery", 0)
         if mastery > 0:
             masteries.append(mastery)
-            total_sessions += data.get("sessions", 0)
-            
-            if data.get("completed", False):
+            total_sessions += d.get("sessions", 0)
+            if d.get("completed", False):
                 completed += 1
-            
             if mastery > max_mastery:
                 max_mastery = mastery
                 strongest = topic
-            
             if mastery < min_mastery:
                 min_mastery = mastery
                 weakest = topic
-    
+
     return {
         "total_topics_attempted": len(masteries),
         "completed_topics": completed,
@@ -247,3 +283,20 @@ def get_overall_stats(username: str) -> dict:
         "strongest_topic": strongest,
         "weakest_topic": weakest
     }
+
+
+def topic_is_assessed(username: str, topic: str) -> bool:
+    """Return True if the user has already taken an assessment for this topic."""
+    d = get_topic_progress(username, topic)
+    return d.get("level", "Not Assessed") != "Not Assessed" and d.get("mastery", 0) > 0
+
+
+def update_session_access(username: str, topic: str):
+    """Touch the last_accessed timestamp when a user visits a topic."""
+    data = _load_progress()
+    if username not in data:
+        data[username] = {}
+    if topic not in data[username]:
+        data[username][topic] = _default_topic_data()
+    data[username][topic]["last_accessed"] = datetime.now().isoformat()
+    _save_progress(data)

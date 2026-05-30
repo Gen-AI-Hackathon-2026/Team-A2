@@ -10,23 +10,48 @@ import pickle
 import faiss
 from sentence_transformers import SentenceTransformer
 
-# Global model cache
+try:
+    import streamlit as st
+    _STREAMLIT_AVAILABLE = True
+except ImportError:
+    _STREAMLIT_AVAILABLE = False
+
+# Python-level singleton fallback (used when Streamlit is not running)
 _model = None
+
+
+# ── Streamlit-cached loader (loaded ONCE per server session, never on reruns) ──
+if _STREAMLIT_AVAILABLE:
+    @st.cache_resource(show_spinner=False)
+    def _load_model_cached() -> SentenceTransformer:
+        """Load embedding model once and pin it in Streamlit's resource cache."""
+        print("[LOAD] Loading embedding model: all-MiniLM-L6-v2...")
+        model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+        print("[OK] Embedding model loaded and cached")
+        return model
 
 
 def get_embedding_model() -> SentenceTransformer:
     """
-    Get or load the embedding model (cached singleton).
-    
+    Get or load the embedding model.
+    When running inside Streamlit: uses st.cache_resource — loads ONCE,
+    survives all reruns and all user sessions for the server lifetime.
+    When running standalone: falls back to the Python-level _model singleton.
+
     Returns:
         SentenceTransformer model instance
     """
     global _model
-    if _model is None:
-        print("[LOAD] Loading embedding model: all-MiniLM-L6-v2...")
-        _model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
-        print("[OK] Embedding model loaded")
-    return _model
+    if _STREAMLIT_AVAILABLE:
+        # st.cache_resource ensures the model is only loaded once per server
+        return _load_model_cached()
+    else:
+        # Fallback for scripts/tests run outside Streamlit
+        if _model is None:
+            print("[LOAD] Loading embedding model: all-MiniLM-L6-v2...")
+            _model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+            print("[OK] Embedding model loaded")
+        return _model
 
 
 def generate_embeddings(chunks: list) -> np.ndarray:

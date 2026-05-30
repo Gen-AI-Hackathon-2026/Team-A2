@@ -1,173 +1,215 @@
 """
 Topic Selection Page for Synapse AI Tutor.
-Displays all available topics as interactive cards.
+Multi-topic selection with persistent profile display.
 """
 
 import streamlit as st
-from backend.progress_tracker import get_topic_progress
+from backend.progress_tracker import get_topic_progress, topic_is_assessed
 
-
-# Topic metadata with descriptions and colors
 TOPICS = {
-    "Neural Networks": {
-        "icon": "NN",
-        "description": "Foundations of deep learning -- perceptrons, activations, backpropagation",
-        "color": "#6C63FF"
-    },
-    "CNNs": {
-        "icon": "CN",
-        "description": "Convolutional neural networks for image processing and computer vision",
-        "color": "#00D2FF"
-    },
-    "RNNs": {
-        "icon": "RN",
-        "description": "Recurrent networks for sequential data -- LSTM, GRU, time series",
-        "color": "#FF6B6B"
-    },
-    "Transformers": {
-        "icon": "TF",
-        "description": "Self-attention, multi-head attention, encoder-decoder architecture",
-        "color": "#FFB347"
-    },
-    "LLMs": {
-        "icon": "LM",
-        "description": "Large language models -- GPT, pre-training, scaling laws, reasoning",
-        "color": "#2ECC71"
-    },
-    "Prompt Engineering": {
-        "icon": "PE",
-        "description": "Crafting effective prompts -- few-shot, chain-of-thought, templates",
-        "color": "#E74C3C"
-    },
-    "Generative AI Fundamentals": {
-        "icon": "GA",
-        "description": "Core concepts of generative models, latent spaces, and evaluation",
-        "color": "#9B59B6"
-    },
-    "GANs": {
-        "icon": "GN",
-        "description": "Generative adversarial networks -- generators, discriminators, training",
-        "color": "#1ABC9C"
-    },
-    "Diffusion Models": {
-        "icon": "DM",
-        "description": "Denoising diffusion -- forward process, reverse sampling, stable diffusion",
-        "color": "#3498DB"
-    },
-    "Fine-Tuning and RAG": {
-        "icon": "FR",
-        "description": "LoRA, QLoRA, retrieval-augmented generation, domain adaptation",
-        "color": "#F39C12"
-    }
+    "Neural Networks": {"abbr": "NN", "description": "Perceptrons, backpropagation, activation functions", "color": "#6C63FF"},
+    "CNNs":            {"abbr": "CN", "description": "Convolutional nets for image processing", "color": "#00D2FF"},
+    "RNNs":            {"abbr": "RN", "description": "Recurrent nets, LSTM, GRU, time series", "color": "#FF6B6B"},
+    "Transformers":    {"abbr": "TF", "description": "Self-attention, multi-head attention, BERT", "color": "#FFB347"},
+    "LLMs":            {"abbr": "LM", "description": "GPT, scaling laws, tokenization, reasoning", "color": "#2ECC71"},
+    "Prompt Engineering": {"abbr": "PE", "description": "Few-shot, chain-of-thought, templates", "color": "#E74C3C"},
+    "Generative AI Fundamentals": {"abbr": "GA", "description": "Latent space, evaluation, AI ethics", "color": "#9B59B6"},
+    "GANs":            {"abbr": "GN", "description": "Generator, discriminator, adversarial training", "color": "#1ABC9C"},
+    "Diffusion Models":{"abbr": "DM", "description": "DDPM, stable diffusion, denoising process", "color": "#3498DB"},
+    "Fine-Tuning and RAG": {"abbr": "FR", "description": "LoRA, QLoRA, retrieval-augmented generation", "color": "#F39C12"},
 }
 
 
-def render_topic_selection():
-    """Render the topic selection page."""
+def _hex_to_rgb(hex_color: str) -> str:
+    h = hex_color.lstrip('#')
+    r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+    return f"{r},{g},{b}"
 
-    # Header
+
+def render_topic_selection():
+    username = st.session_state.username
+
     st.markdown("""
     <div class="main-header animate-fade-in">
-        <h1>Choose Your Topic</h1>
-        <p>Select a topic to begin your personalized learning journey</p>
+        <h1>Choose Your Topics</h1>
+        <p>Select one or more topics to begin personalized learning</p>
     </div>
     """, unsafe_allow_html=True)
-
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # Topic grid -- 2 rows of 5
-    topics_list = list(TOPICS.items())
+    # Currently selected topics (multi-select state)
+    if "selected_topics" not in st.session_state:
+        st.session_state.selected_topics = []
 
+    topics_list = list(TOPICS.items())
+    selected_set = set(st.session_state.selected_topics)
+
+    # Render in 2 rows × 5 cols
     for row in range(2):
         cols = st.columns(5)
-        for col_idx in range(5):
-            topic_idx = row * 5 + col_idx
-            if topic_idx < len(topics_list):
-                topic_name, meta = topics_list[topic_idx]
+        for ci in range(5):
+            idx = row * 5 + ci
+            if idx >= len(topics_list):
+                break
+            topic_name, meta = topics_list[idx]
+            progress = get_topic_progress(username, topic_name)
+            mastery = progress.get("mastery", 0)
+            level = progress.get("level", "Not Assessed")
+            assessed = topic_is_assessed(username, topic_name)
+            is_selected = topic_name in selected_set
 
-                with cols[col_idx]:
-                    # Get progress if available
-                    progress = get_topic_progress(st.session_state.username, topic_name)
-                    mastery = progress.get("mastery", 0)
-                    level = progress.get("level", "Not Assessed")
+            with cols[ci]:
+                # Level badge
+                badge_html = ""
+                if level == "Beginner":
+                    badge_html = f'<span class="badge badge-beginner">Beginner</span>'
+                elif level == "Intermediate":
+                    badge_html = f'<span class="badge badge-intermediate">Intermediate</span>'
+                elif level == "Advanced":
+                    badge_html = f'<span class="badge badge-advanced">Advanced</span>'
 
-                    # Level badge
-                    if level == "Beginner":
-                        badge_class = "badge-beginner"
-                    elif level == "Intermediate":
-                        badge_class = "badge-intermediate"
-                    elif level == "Advanced":
-                        badge_class = "badge-advanced"
-                    else:
-                        badge_class = ""
-
-                    level_badge = ""
-                    if level != "Not Assessed":
-                        level_badge = f'<span class="badge {badge_class}">{level}</span>'
-
-                    # Progress bar
-                    progress_bar = ""
-                    if mastery > 0:
-                        progress_bar = f"""
-                        <div style="margin-top: 0.6rem;">
-                            <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: #A0A0C0; margin-bottom: 0.2rem;">
-                                <span>Mastery</span>
-                                <span>{mastery}%</span>
-                            </div>
-                            <div style="background: rgba(255,255,255,0.05); border-radius: 4px; height: 4px; overflow: hidden;">
-                                <div style="background: {meta['color']}; width: {mastery}%; height: 100%; border-radius: 4px;
-                                            transition: width 0.5s ease;"></div>
-                            </div>
+                # Mastery bar
+                mastery_bar = ""
+                if mastery > 0:
+                    mastery_bar = f"""
+                    <div style="margin-top:0.5rem;">
+                        <div style="display:flex;justify-content:space-between;font-size:0.65rem;color:#A0A0C0;margin-bottom:0.15rem;">
+                            <span>Mastery</span><span>{mastery}%</span>
                         </div>
-                        """
+                        <div style="background:rgba(255,255,255,0.05);border-radius:3px;height:3px;overflow:hidden;">
+                            <div style="background:{meta['color']};width:{mastery}%;height:100%;border-radius:3px;"></div>
+                        </div>
+                    </div>"""
 
-                    # Render card as HTML
-                    st.markdown(f"""
-                    <div class="topic-card" style="border-color: rgba({_hex_to_rgb(meta['color'])}, 0.15);">
-                        <div class="topic-icon" style="background: linear-gradient(135deg, {meta['color']}, {meta['color']}88);
-                                    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-                                    font-weight: 900; font-size: 1.5rem; letter-spacing: -1px;">{meta['icon']}</div>
-                        <div class="topic-name">{topic_name}</div>
-                        <div class="topic-desc">{meta['description']}</div>
-                        <div style="margin-top: 0.5rem;">{level_badge}</div>
-                        {progress_bar}
-                    </div>
-                    """, unsafe_allow_html=True)
+                # Selected indicator
+                selected_border = f"border: 2px solid {meta['color']}; box-shadow: 0 0 16px rgba({_hex_to_rgb(meta['color'])},0.35);" if is_selected else ""
 
-                    # Button to select topic
-                    if st.button(
-                        f"Select",
-                        key=f"select_{topic_name}",
-                        use_container_width=True
-                    ):
-                        st.session_state.selected_topic = topic_name
-                        st.session_state.assessment_questions = None
-                        st.session_state.assessment_answers = []
-                        st.session_state.assessment_complete = False
-                        st.session_state.assessment_result = None
-                        st.session_state.current_question_idx = 0
-                        st.session_state.chat_history = []
-                        st.session_state.tutor_response = None
-                        st.session_state.current_page = "assessment"
-                        st.rerun()
+                st.markdown(f"""
+                <div class="topic-card" style="border-color:rgba({_hex_to_rgb(meta['color'])},0.2);{selected_border}">
+                    <div style="font-size:1.2rem;font-weight:900;letter-spacing:-1px;
+                                background:linear-gradient(135deg,{meta['color']},{meta['color']}88);
+                                -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+                                margin-bottom:0.3rem;">{meta['abbr']}</div>
+                    <div class="topic-name">{topic_name}</div>
+                    <div class="topic-desc">{meta['description']}</div>
+                    <div style="margin-top:0.4rem;">{badge_html}</div>
+                    {mastery_bar}
+                    {"<div style='font-size:0.62rem;color:#2ECC71;margin-top:0.3rem;'>Selected</div>" if is_selected else ""}
+                </div>
+                """, unsafe_allow_html=True)
+
+                btn_label = "Deselect" if is_selected else ("Select" if not assessed else "Re-Select")
+                if st.button(btn_label, key=f"sel_{topic_name}", use_container_width=True):
+                    if is_selected:
+                        st.session_state.selected_topics.remove(topic_name)
+                    else:
+                        if topic_name not in st.session_state.selected_topics:
+                            st.session_state.selected_topics.append(topic_name)
+                    st.rerun()
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-    # Info section
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("""
-    <div style="text-align: center; padding: 1.5rem; background: rgba(108, 99, 255, 0.05);
-                border-radius: 16px; border: 1px solid rgba(108, 99, 255, 0.1);">
-        <p style="color: #A0A0C0; font-size: 0.9rem; margin: 0;">
-            After selecting a topic, you'll take a quick <strong style="color: #8B83FF;">5-question assessment</strong>
-            to determine your proficiency level. The AI tutor will then adapt its teaching style to match your needs.
-        </p>
+    # ── Bottom Action Panel ────────────────────────────────────────────────────
+    selected = st.session_state.selected_topics
+    st.divider()
+
+    if not selected:
+        st.info("Select at least one topic above to continue.")
+        return
+
+    # Summary of selected
+    topic_tags = "  |  ".join([f"**{t}**" for t in selected])
+    st.markdown(f"""
+    <div style="background:rgba(108,99,255,0.06);border:1px solid rgba(108,99,255,0.15);
+                border-radius:12px;padding:1rem 1.5rem;margin-bottom:1rem;">
+        <div style="color:#A0A0C0;font-size:0.78rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:0.4rem;">
+            {len(selected)} topic{"s" if len(selected) > 1 else ""} selected
+        </div>
+        <div style="color:#FFFFFF;font-weight:600;font-size:0.9rem;">{" &nbsp;|&nbsp; ".join(selected)}</div>
     </div>
     """, unsafe_allow_html=True)
 
+    # Detect already-assessed topics
+    already_assessed = [t for t in selected if topic_is_assessed(username, t)]
+    not_assessed = [t for t in selected if not topic_is_assessed(username, t)]
 
-def _hex_to_rgb(hex_color: str) -> str:
-    """Convert hex color to RGB string."""
-    hex_color = hex_color.lstrip('#')
-    r, g, b = int(hex_color[0:2], 16), int(hex_color[2:4], 16), int(hex_color[4:6], 16)
-    return f"{r}, {g}, {b}"
+    action_col1, action_col2, action_col3 = st.columns([2, 2, 1])
+
+    with action_col1:
+        if not_assessed:
+            if st.button(f"Start Assessment ({len(not_assessed)} new topic{'s' if len(not_assessed)>1 else ''})",
+                         use_container_width=True, type="primary"):
+                # Queue unassessed topics first
+                st.session_state.topic_queue = not_assessed[:]
+                st.session_state.topic_queue_idx = 0
+                _start_next_assessment()
+
+        elif already_assessed:
+            if st.button("Retake Assessments", use_container_width=True, type="primary"):
+                st.session_state.topic_queue = selected[:]
+                st.session_state.topic_queue_idx = 0
+                _start_next_assessment()
+
+    with action_col2:
+        if already_assessed:
+            # Go directly to tutor for first assessed topic
+            first_assessed = already_assessed[0]
+            if st.button(f"Continue Learning: {first_assessed[:20]}", use_container_width=True):
+                st.session_state.selected_topic = first_assessed
+                if first_assessed not in st.session_state.chat_histories:
+                    st.session_state.chat_histories[first_assessed] = []
+                st.session_state.current_page = "tutor"
+                st.rerun()
+
+    with action_col3:
+        if selected:
+            if st.button("Dashboard", use_container_width=True):
+                st.session_state.current_page = "dashboard"
+                st.rerun()
+
+    # Show existing profile summary for assessed topics
+    if already_assessed:
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("""
+        <div style="font-weight:600;color:#FFFFFF;font-size:0.95rem;margin-bottom:0.8rem;">
+            Existing Profile (from previous sessions)
+        </div>""", unsafe_allow_html=True)
+
+        cols = st.columns(min(len(already_assessed), 3))
+        for i, topic_name in enumerate(already_assessed[:3]):
+            progress = get_topic_progress(username, topic_name)
+            mastery = progress.get("mastery", 0)
+            level = progress.get("level", "Not Assessed")
+            gaps = progress.get("knowledge_gaps", [])
+
+            lc = {"Beginner": "#2ECC71", "Intermediate": "#F39C12", "Advanced": "#8B83FF"}.get(level, "#A0A0C0")
+
+            gaps_html = ""
+            if gaps:
+                gaps_html = "<br>".join([f"<span style='font-size:0.7rem;color:#F39C12;'>* {g}</span>" for g in gaps[:3]])
+            else:
+                gaps_html = "<span style='font-size:0.7rem;color:#6B6B8D;'>No gaps detected</span>"
+
+            with cols[i]:
+                st.markdown(f"""
+                <div class="synapse-card" style="text-align:center;padding:1rem;">
+                    <div style="color:#A0A0C0;font-size:0.72rem;margin-bottom:0.4rem;">{topic_name}</div>
+                    <div style="font-size:1.8rem;font-weight:800;color:{lc};">{mastery}%</div>
+                    <div style="color:{lc};font-weight:600;font-size:0.85rem;margin-bottom:0.5rem;">{level}</div>
+                    <div style="text-align:left;">{gaps_html}</div>
+                </div>
+                """, unsafe_allow_html=True)
+
+
+def _start_next_assessment():
+    """Start assessment for the next topic in the queue."""
+    if st.session_state.topic_queue_idx < len(st.session_state.topic_queue):
+        topic = st.session_state.topic_queue[st.session_state.topic_queue_idx]
+        st.session_state.selected_topic = topic
+        st.session_state.assessment_questions = None
+        st.session_state.assessment_answers = []
+        st.session_state.assessment_complete = False
+        st.session_state.assessment_result = None
+        st.session_state.current_question_idx = 0
+        st.session_state.current_page = "assessment"
+        st.rerun()

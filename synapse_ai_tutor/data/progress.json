@@ -16,6 +16,21 @@
       "sessions": 1,
       "last_accessed": "2026-05-30T21:33:44.450183",
       "completed": false
+    },
+    "Neural Networks": {
+      "mastery": 60,
+      "level": "Intermediate",
+      "scores": [
+        60
+      ],
+      "weak_areas": [
+        "Linear Algebra",
+        "Calculus (Derivatives & Chain Rule)",
+        "Probability & Statistics"
+      ],
+      "sessions": 1,
+      "last_accessed": "2026-05-30T21:42:45.891990",
+      "completed": false
     }
   },
   "user1": {
@@ -33,6 +48,26 @@
       "sessions": 1,
       "last_accessed": "2026-05-30T21:35:15.993770",
       "completed": false
+    },
+    "Prompt Engineering": {
+      "mastery": 90,
+      "level": "Advanced",
+      "score": 27,
+      "max_score": 30,
+      "knowledge_gaps": [],
+      "assessment_history": [
+        {
+          "date": "2026-05-30T22:07:47.344962",
+          "score": 27,
+          "max_score": 30,
+          "level": "Advanced",
+          "mastery": 90
+        }
+      ],
+      "practice_history": [],
+      "sessions": 1,
+      "last_accessed": "2026-05-30T22:29:29.358559",
+      "completed": true
     }
   }
 }
