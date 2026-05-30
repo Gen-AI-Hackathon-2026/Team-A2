@@ -455,18 +455,39 @@ def build_topic_graph(topic: str, username: str = None) -> dict:
     return {"nodes": nodes, "edges": edges}
 
 
-def generate_cytoscape_html(graph_data: dict, height: int = 550) -> str:
+def generate_cytoscape_html(
+    graph_data: dict = None,
+    height=550,
+    username: str = None,
+) -> str:
     """
     Generate a self-contained HTML string that renders the graph with
     Cytoscape.js (loaded from CDN — no pip install required).
 
+    Can be called as:
+        generate_cytoscape_html(username=u, height="600px")          # full graph
+        generate_cytoscape_html(username=u, height="550px",          # topic graph
+                                graph_data=topic_graph_data)
+
     Args:
-        graph_data: dict returned by build_full_graph() or build_topic_graph().
-        height:     Height of the graph canvas in pixels.
+        graph_data: dict from build_full_graph() or build_topic_graph().
+                    If None, builds the full curriculum graph for username.
+        height:     Height in pixels (int) or CSS string like "600px".
+        username:   Used to build the graph if graph_data is not provided.
 
     Returns:
         HTML string suitable for st.components.v1.html().
     """
+    # Auto-build graph data if not supplied
+    if graph_data is None:
+        graph_data = build_full_graph(username)
+
+    # Normalise height: accept int (550) or string ('550px' or '550')
+    if isinstance(height, str):
+        height_px = int(height.replace('px', '').strip())
+    else:
+        height_px = int(height)
+
     elements_js = _build_elements_js(graph_data)
 
     return f"""<!DOCTYPE html>
@@ -479,7 +500,7 @@ def generate_cytoscape_html(graph_data: dict, height: int = 550) -> str:
     font-family: 'Inter', sans-serif; overflow: hidden;
   }}
   #cy {{
-    width: 100%; height: {height}px;
+    width: 100%; height: {height_px}px;
     background: radial-gradient(ellipse at center, #10103A 0%, #0A0A1A 100%);
   }}
   #tooltip {{
