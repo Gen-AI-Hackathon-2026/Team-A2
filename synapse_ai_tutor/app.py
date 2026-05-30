@@ -186,6 +186,30 @@ def inject_global_styles():
     #MainMenu { visibility: hidden; }
     footer    { visibility: hidden; }
     header    { visibility: hidden; }
+
+    /* ── Force sidebar always open ───────────────────────────────────────── */
+    [data-testid="collapsedControl"] { display: none !important; }
+    section[data-testid="stSidebar"] {
+        width: 14rem !important;
+        min-width: 14rem !important;
+    }
+
+    /* ── Top nav bar ─────────────────────────────────────────────────────── */
+    .topnav-bar {
+        display: flex; align-items: center; gap: 0.3rem;
+        padding: 0.5rem 1rem;
+        background: rgba(12,12,30,0.95);
+        border-bottom: 1px solid rgba(108,99,255,0.2);
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+    .topnav-bar a {
+        color: #A0A0C0; text-decoration: none; font-size: 0.82rem;
+        font-weight: 500; padding: 0.3rem 0.7rem; border-radius: 6px;
+        transition: all 0.2s;
+    }
+    .topnav-bar a:hover { background: rgba(108,99,255,0.15); color: #FFFFFF; }
+    .topnav-bar a.active { background: rgba(108,99,255,0.25); color: #6C63FF; font-weight: 700; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -271,9 +295,9 @@ def render_sidebar():
             ("knowledge_vault",  "Vault"),
             ("knowledge_graph",  "Graph"),
             ("dashboard",        "Dashboard"),
-            ("Chatbot",          "Chatbot"),
-            ("Visualizer",       "Visualizer"),
-            ("Resources",        "Resources"),
+            ("chatbot",          "Chatbot"),
+            ("visualizer",       "Visualizer"),
+            ("resources",        "Resources"),
         ]
 
         current = st.session_state.page
@@ -360,6 +384,63 @@ def initialize_rag():
 
 
 # ---------------------------------------------------------------------------
+# Top navigation bar (native Streamlit — always visible)
+# ---------------------------------------------------------------------------
+def render_topnav():
+    """Horizontal navigation bar using native Streamlit buttons.
+    This is always visible regardless of sidebar state.
+    """
+    page = st.session_state.page
+    username = st.session_state.get("username", "")
+
+    # Brand + nav in one row
+    brand_col, *nav_cols, logout_col = st.columns([2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
+
+    with brand_col:
+        st.markdown(
+            "<div style='padding:0.35rem 0;font-size:1.1rem;font-weight:900;"
+            "background:linear-gradient(135deg,#6C63FF,#00D2FF);"
+            "-webkit-background-clip:text;-webkit-text-fill-color:transparent;'>"
+            f"Synapse &nbsp;<span style='font-size:0.7rem;font-weight:400;"
+            f"-webkit-text-fill-color:#A0A0C0;'>{username}</span></div>",
+            unsafe_allow_html=True,
+        )
+
+    nav_defs = [
+        ("topic_selection", "Topics"),
+        ("assessment",      "Assessment"),
+        ("tutor",           "Tutor"),
+        ("roadmap",         "Roadmap"),
+        ("knowledge_vault", "Vault"),
+        ("knowledge_graph", "Graph"),
+        ("dashboard",       "Dashboard"),
+        ("chatbot",         "Chatbot"),
+        ("visualizer",      "Visualizer"),
+        ("resources",       "Resources"),
+    ]
+
+    for col, (key, label) in zip(nav_cols, nav_defs):
+        with col:
+            active = page == key
+            if st.button(
+                label,
+                key=f"topnav_{key}",
+                type="primary" if active else "secondary",
+                use_container_width=True,
+            ):
+                st.session_state.page = key
+                st.rerun()
+
+    with logout_col:
+        if st.button("Logout", key="topnav_logout", use_container_width=True):
+            for k in list(st.session_state.keys()):
+                del st.session_state[k]
+            st.rerun()
+
+    st.divider()
+
+
+# ---------------------------------------------------------------------------
 # Main router
 # ---------------------------------------------------------------------------
 def main():
@@ -373,10 +454,10 @@ def main():
         return
 
     initialize_rag()
+    render_topnav()   # Always-visible top nav bar
 
     page = st.session_state.page
 
-    # Core pages
     if page == "topic_selection":
         render_topic_selection()
     elif page == "assessment":
@@ -385,7 +466,6 @@ def main():
         render_tutor()
     elif page == "dashboard":
         render_dashboard()
-    # New pages from knowledge-graph branch
     elif page == "roadmap":
         render_roadmap()
     elif page == "note_viewer":
@@ -394,15 +474,13 @@ def main():
         render_knowledge_vault()
     elif page == "knowledge_graph":
         render_knowledge_graph()
-    # Pages kept from main (top-nav era)
-    elif page == "Chatbot":
+    elif page == "chatbot":
         render_chatbot()
-    elif page == "Visualizer":
+    elif page == "visualizer":
         render_visualizer()
-    elif page == "Resources":
+    elif page == "resources":
         render_resources()
     else:
-        # Default landing
         render_topic_selection()
 
 
