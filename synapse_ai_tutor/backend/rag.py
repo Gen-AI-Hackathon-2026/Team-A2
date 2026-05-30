@@ -2,6 +2,9 @@
 RAG (Retrieval-Augmented Generation) Pipeline for Synapse AI Tutor.
 Orchestrates the full RAG pipeline: chunking, embedding, indexing, and retrieval.
 Implements smart caching to avoid regenerating embeddings.
+
+Extended with GraphRAG support: graph_rag_search() uses knowledge-graph
+query expansion before FAISS retrieval.
 """
 
 import os
@@ -17,6 +20,11 @@ class RAGPipeline:
     """
     Complete RAG pipeline that manages the knowledge corpus,
     embeddings, FAISS index, and retrieval.
+
+    Provides:
+        search()            -- standard FAISS retrieval
+        search_for_topic()  -- topic-anchored FAISS retrieval
+        graph_rag_search()  -- GraphRAG (graph expansion + FAISS + reranking)
     """
     
     def __init__(self, data_dir: str = None):
@@ -127,6 +135,49 @@ class RAGPipeline:
         if not self.is_ready:
             return []
         return retrieve_for_topic(topic, question, self.index, self.chunks, k)
+
+    def graph_rag_search(self, question: str, topic: str, k: int = 6) -> dict:
+        """
+        Graph-augmented retrieval pipeline.
+
+        Steps:
+          1. Expand the query using the knowledge graph (concept neighbours).
+          2. Run FAISS retrieval on the expanded query.
+          3. Rerank results by concept overlap.
+
+        Args:
+            question: The student's raw question.
+            topic:    Currently selected topic.
+            k:        Number of final chunks to return.
+
+        Returns:
+            {
+                "chunks":             list[dict],
+                "expanded_query":     str,
+                "matched_concepts":   list[str],
+                "neighbour_concepts": list[str],
+                "retrieval_method":   "GraphRAG",
+                "graph_stats":        dict,
+            }
+        """
+        if not self.is_ready:
+            return {
+                "chunks":             [],
+                "expanded_query":     question,
+                "matched_concepts":   [],
+                "neighbour_concepts": [],
+                "retrieval_method":   "GraphRAG (index not ready)",
+                "graph_stats":        {},
+            }
+
+        from backend.graph_rag import graph_rag_retrieve
+        return graph_rag_retrieve(
+            question=question,
+            topic=topic,
+            index=self.index,
+            chunks=self.chunks,
+            k=k,
+        )
     
     def get_status(self) -> dict:
         """Get the current status of the RAG pipeline."""
