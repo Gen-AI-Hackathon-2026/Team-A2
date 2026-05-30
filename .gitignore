@@ -1,0 +1,26 @@
+# ── Secrets (NEVER commit these) ─────────────────────────────────────────────
+.streamlit/secrets.toml
+
+# ── Voice layer generated cache ───────────────────────────────────────────────
+audio_cache/*.mp3
+
+# ── Python bytecode ───────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# ── Development / test files ──────────────────────────────────────────────────
+synapse_ai_tutor/smoke_test.py
+synapse_ai_tutor/verify_voice.py
+
+# ── OS / editor files ─────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# ── Streamlit cache ───────────────────────────────────────────────────────────
+.streamlit/cache/

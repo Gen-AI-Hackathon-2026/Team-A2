@@ -2,6 +2,12 @@
 Tutor Page for Synapse AI Tutor.
 Adaptive AI tutoring with RAG source visibility, knowledge gap loading,
 fallback mode, and dynamic mastery updates.
+
+Voice Layer
+-----------
+STT  : faster-whisper → openai-whisper fallback  (via backend/stt.py)
+TTS  : ElevenLabs → gTTS fallback                (via backend/tts.py)
+UI   : shared mic + audio-player widgets          (via backend/voice_components.py)
 """
 
 import streamlit as st
@@ -13,6 +19,11 @@ from backend.progress_tracker import (
 from backend.gap_detector import detect_knowledge_gaps
 from backend.llm_client import generate_tutoring_response, check_connection
 from backend.resources import get_resources_for_level
+from backend.voice_components import (
+    render_voice_input,
+    render_tts_controls,
+    render_tts_settings,
+)
 
 LEVEL_COLORS = {"Beginner": "#2ECC71", "Intermediate": "#F39C12", "Advanced": "#8B83FF"}
 
@@ -132,10 +143,22 @@ def render_tutor():
 
 # ---------------------------------------------------------------------------
 def _render_chat(topic, level, mastery, knowledge_gaps, username):
-    st.markdown(
-        '<div style="font-weight:600;color:#FFFFFF;font-size:0.92rem;margin-bottom:0.7rem;">Chat with Synapse</div>',
-        unsafe_allow_html=True,
-    )
+    # ── Header row: title + TTS auto-play toggle ──────────────────────────────
+    hdr_col, tgl_col = st.columns([3, 2])
+    with hdr_col:
+        st.markdown(
+            '<div style="font-weight:600;color:#FFFFFF;font-size:0.92rem;margin-bottom:0.4rem;">Chat with Synapse</div>',
+            unsafe_allow_html=True,
+        )
+    with tgl_col:
+        auto_play = render_tts_settings(page_key="tutor")
+
+    # ── Voice input widget ────────────────────────────────────────────────────
+    voice_transcript = render_voice_input(page_key="tutor")
+
+    st.markdown("""
+    <div style="border-bottom:1px solid rgba(108,99,255,0.12);margin-bottom:0.6rem;"></div>
+    """, unsafe_allow_html=True)
 
     if "chat_histories" not in st.session_state:
         st.session_state.chat_histories = {}
@@ -144,16 +167,25 @@ def _render_chat(topic, level, mastery, knowledge_gaps, username):
 
     chat_history = st.session_state.chat_histories[topic]
 
-    for msg in chat_history:
+    # ── Render existing messages ───────────────────────────────────────────────
+    for idx, msg in enumerate(chat_history):
         role   = msg["role"]
         avatar = "user" if role == "user" else "assistant"
         with st.chat_message(role, avatar=avatar):
             st.markdown(msg["content"])
-            if role == "assistant" and msg.get("sources"):
-                with st.expander(f"Sources ({len(msg['sources'])} passages)", expanded=False):
-                    for src in msg["sources"]:
-                        st.markdown(
-                            f"""
+            if role == "assistant":
+                # TTS controls for each assistant message
+                render_tts_controls(
+                    response_text=msg["content"],
+                    page_key="tutor",
+                    message_index=idx,
+                    auto_play=False,  # History messages never auto-play
+                )
+                if msg.get("sources"):
+                    with st.expander(f"Sources ({len(msg['sources'])} passages)", expanded=False):
+                        for src in msg["sources"]:
+                            st.markdown(
+                                f"""
 <div class="source-citation">
     <div><span class="source-book">{src["source"]}</span>
     <span class="source-page"> - Page {src["page"]}</span></div>
@@ -162,10 +194,12 @@ def _render_chat(topic, level, mastery, knowledge_gaps, username):
     </div>
 </div>
 """,
-                            unsafe_allow_html=True,
-                        )
+                                unsafe_allow_html=True,
+                            )
 
-    user_q = st.chat_input(f"Ask about {topic}...", key="tutor_input")
+    # ── Determine user input: typed text OR voice transcript ─────────────────
+    typed_q = st.chat_input(f"Ask about {topic}…", key="tutor_input")
+    user_q  = typed_q or voice_transcript  # voice wins if both arrive simultaneously
 
     if user_q:
         chat_history.append({"role": "user", "content": user_q, "sources": []})
@@ -206,6 +240,15 @@ def _render_chat(topic, level, mastery, knowledge_gaps, username):
                 )
 
             st.markdown(full_text)
+
+            # ── TTS for the fresh response ────────────────────────────────────
+            new_msg_idx = len(chat_history)  # index this message will have
+            render_tts_controls(
+                response_text=full_text,
+                page_key="tutor",
+                message_index=new_msg_idx,
+                auto_play=auto_play,
+            )
 
             if sources:
                 with st.expander(f"Sources ({len(sources)} passages)", expanded=True):

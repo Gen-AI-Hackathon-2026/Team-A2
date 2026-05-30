@@ -19,6 +19,13 @@ from pages.dashboard import render_dashboard
 from pages.resources import render_resources
 from pages.visualizer import render_visualizer
 
+# Voice layer — health check at startup (logs only, never blocks the UI)
+try:
+    from backend.voice_health import log_health_check as _voice_health_log
+    _VOICE_HEALTH_AVAILABLE = True
+except Exception:
+    _VOICE_HEALTH_AVAILABLE = False
+
 
 # ---------------------------------------------------------------------------
 # Page config – must be first Streamlit call
@@ -352,6 +359,10 @@ def init_session_state():
         "pdf_index": None,
         "pdf_filename": None,
         "chatbot_use_pdf": False,
+        # Voice layer
+        "_tts_autoplay_tutor":   False,
+        "_tts_autoplay_chatbot": False,
+        "_voice_health_done":    False,  # tracks whether startup check has logged
     }
     for key, value in defaults.items():
         if key not in st.session_state:
@@ -514,6 +525,18 @@ def _load_rag_pipeline():
     return rag
 
 
+@st.cache_resource(show_spinner=False)
+def _run_voice_startup_check():
+    """
+    Run voice layer health check exactly once at server startup.
+    Results go to the console / Streamlit server log — never shown in the UI.
+    Cached via @st.cache_resource so it runs only once per server session.
+    """
+    if _VOICE_HEALTH_AVAILABLE:
+        _voice_health_log()
+    return True
+
+
 def initialize_rag():
     if not st.session_state.rag_initialized:
         try:
@@ -532,6 +555,7 @@ def main():
     configure_page()
     inject_global_styles()
     init_session_state()
+    _run_voice_startup_check()  # logs [STT]/[TTS] status to console once
 
     # ── Not logged in — show login
     if not st.session_state.authenticated:

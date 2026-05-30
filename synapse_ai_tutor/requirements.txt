@@ -6,3 +6,21 @@ plotly>=5.18.0
 requests>=2.31.0
 torch>=2.0.0
 numpy>=1.24.0
+
+# ── Voice Layer ─────────────────────────────────────────────────────────────
+# HACKATHON MODE (default) — all local, zero cloud dependencies
+# STT — Speech-to-Text (local)
+faster-whisper>=1.0.0          # PRIMARY STT: fast CPU inference, int8 quantised
+openai-whisper>=20231117        # FALLBACK STT: pure Python (no extra ffmpeg needed)
+# st.audio_input() handles mic — built into Streamlit >= 1.35, no package needed
+
+# TTS — Text-to-Speech (local / free)
+gTTS>=2.3.2                     # PRIMARY TTS: Google TTS, free, no API key
+pydub>=0.25.1                   # Audio chunking + MP3 concatenation
+audioop-lts>=0.2.1              # Python 3.13 compat shim for pydub (audioop removed in 3.13)
+soundfile>=0.12.1               # Audio file I/O (used by Whisper backends)
+
+# ── Optional Cloud Accelerators (not required for hackathon) ─────────────────
+# Uncomment to enable, then set the corresponding key in .streamlit/secrets.toml
+# groq>=0.9.0                   # Groq Whisper STT acceleration (USE_GROQ_STT=True)
+# elevenlabs>=1.0.0             # ElevenLabs premium TTS (USE_ELEVENLABS=True)
