@@ -37,7 +37,7 @@ import streamlit as st
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
-# Config ΓÇö single source of truth from voice_config
+# Config — single source of truth from voice_config
 # ---------------------------------------------------------------------------
 try:
     from backend.voice_config import cfg as _cfg
@@ -56,10 +56,30 @@ except Exception:
 
 
 # ---------------------------------------------------------------------------
+# ffmpeg — ensure it is on PATH (uses bundled imageio-ffmpeg on Windows)
+# ---------------------------------------------------------------------------
+def _ensure_ffmpeg() -> None:
+    """
+    Add the imageio-ffmpeg bundled binary directory to PATH so that
+    openai-whisper (and pydub) can find ffmpeg without a system install.
+    Safe to call multiple times — only adds the path once.
+    """
+    try:
+        import imageio_ffmpeg  # type: ignore
+        ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
+        ffmpeg_dir = os.path.dirname(ffmpeg_exe)
+        if ffmpeg_dir not in os.environ.get("PATH", ""):
+            os.environ["PATH"] = ffmpeg_dir + os.pathsep + os.environ.get("PATH", "")
+            logger.info(f"[STT] ffmpeg injected into PATH from imageio-ffmpeg: {ffmpeg_dir}")
+    except Exception as exc:
+        logger.debug(f"[STT] imageio-ffmpeg not available, skipping PATH injection: {exc}")
+
+
+# ---------------------------------------------------------------------------
 # Groq API key resolution
 # ---------------------------------------------------------------------------
 def _get_groq_key() -> Optional[str]:
-    """Retrieve Groq API key from Streamlit secrets ΓåÆ env var ΓåÆ None."""
+    """Retrieve Groq API key from Streamlit secrets → env var → None."""
     try:
         key = st.secrets.get("groq", {}).get("GROQ_API_KEY")
         if key:
@@ -284,16 +304,19 @@ def transcribe_audio(
 
     tmp_path: Optional[str] = None
     try:
+        # Ensure ffmpeg binary is on PATH (needed by openai-whisper and pydub)
+        _ensure_ffmpeg()
+
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
             tmp.write(audio_bytes)
             tmp_path = tmp.name
 
-        # ΓöÇΓöÇ Step 1: Try Groq (only when enabled and key is present) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+        # ── Step 1: Try Groq (only when enabled and key is present) ───────────
         groq_result = _groq_transcribe(tmp_path, language)
         if groq_result is not None:
             return groq_result
 
-        # ΓöÇΓöÇ Step 2: Local Whisper (always available) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+        # ── Step 2: Local Whisper (always available) ──────────────────────────
         logger.info("[STT] Using Faster-Whisper Local")
         model, backend = load_whisper_model(model_size)
 
