@@ -52,24 +52,23 @@ class VoiceConfig:
     All values can be overridden by environment variables before startup.
     """
 
-    # ΓöÇΓöÇ Mode ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
-    VOICE_MODE: str = _str_env("VOICE_MODE", "hackathon")
+    # ── Mode ──────────────────────────────────────────────────────────────────
+    VOICE_MODE: str = _str_env("VOICE_MODE", "premium")   # Groq STT enabled
 
-    # ΓöÇΓöÇ STT ΓÇö faster-whisper (always available) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
-    WHISPER_MODEL_SIZE: str  = _str_env("WHISPER_MODEL_SIZE", "base")
-    WHISPER_DEVICE: str      = _str_env("WHISPER_DEVICE", "cpu")
+    # ── STT — faster-whisper (local fallback) ─────────────────────────────────
+    WHISPER_MODEL_SIZE: str   = _str_env("WHISPER_MODEL_SIZE", "base")
+    WHISPER_DEVICE: str       = _str_env("WHISPER_DEVICE", "cpu")
     WHISPER_COMPUTE_TYPE: str = _str_env("WHISPER_COMPUTE_TYPE", "int8")
 
-    # ΓöÇΓöÇ STT ΓÇö Groq (optional acceleration, never required) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
-    # The app MUST continue working when Groq is unavailable.
-    # Groq is only an optimisation layer ΓÇö never a dependency.
-    USE_GROQ_STT: bool  = _bool_env("USE_GROQ_STT", False)
+    # ── STT — Groq Whisper API (PRIMARY — fast cloud STT, no local model needed)
+    USE_GROQ_STT: bool  = True                              # enabled in premium mode
     GROQ_STT_MODEL: str = _str_env("GROQ_STT_MODEL", "whisper-large-v3")
 
-    # ΓöÇΓöÇ TTS ΓÇö gTTS (primary, always) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    # ── TTS — gTTS (primary, always) ──────────────────────────────────────────
     TTS_LANG: str = _str_env("TTS_LANG", "en")
 
-    # ΓöÇΓöÇ TTS ΓÇö ElevenLabs (optional premium fallback) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    # ── TTS — ElevenLabs (optional premium fallback) ──────────────────────────
     USE_ELEVENLABS: bool = _bool_env("ELEVENLABS_ENABLED", False)
 
     # ΓöÇΓöÇ Apply mode-specific overrides ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
