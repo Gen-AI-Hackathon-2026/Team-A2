@@ -18,6 +18,10 @@ from pages.chatbot import render_chatbot
 from pages.dashboard import render_dashboard
 from pages.resources import render_resources
 from pages.visualizer import render_visualizer
+from pages.knowledge_graph_page import render_knowledge_graph
+from pages.roadmap import render_roadmap
+from pages.note_viewer import render_note_viewer
+from pages.knowledge_vault import render_knowledge_vault
 
 
 # ---------------------------------------------------------------------------
@@ -567,6 +571,14 @@ def main():
         render_dashboard()
     elif current == "Resources":
         render_resources()
+    elif current == "knowledge_graph":
+        render_knowledge_graph()
+    elif current == "roadmap":
+        render_roadmap()
+    elif current == "note_viewer":
+        render_note_viewer()
+    elif current == "knowledge_vault":
+        render_knowledge_vault()
     else:
         render_home()
 
