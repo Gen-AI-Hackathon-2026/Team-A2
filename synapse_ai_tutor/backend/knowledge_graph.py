@@ -258,19 +258,46 @@ def concept_to_topic(concept: str) -> str:
 # Graph statistics (for UI display)
 # ---------------------------------------------------------------------------
 
-def get_graph_stats() -> dict:
-    """Return summary statistics about the knowledge graph."""
+def get_graph_stats(username: str = None) -> dict:
+    """Return summary statistics about the knowledge graph.
+
+    Args:
+        username: Optional. If provided, mastery data is included in stats.
+                  Backward-compatible — existing callers with no args still work.
+    """
     G = _get_graph()
     topics   = [n for n, d in G.nodes(data=True) if d.get("node_type") == "topic"]
     concepts = [n for n, d in G.nodes(data=True) if d.get("node_type") == "concept"]
-    return {
-        "total_nodes":    G.number_of_nodes(),
-        "total_edges":    G.number_of_edges(),
-        "num_topics":     len(topics),
-        "num_concepts":   len(concepts),
-        "is_dag":         nx.is_directed_acyclic_graph(G),
-        "density":        round(nx.density(G), 4),
+
+    stats = {
+        "total_nodes":  G.number_of_nodes(),
+        "total_edges":  G.number_of_edges(),
+        "num_topics":   len(topics),
+        "num_concepts": len(concepts),
+        "is_dag":       nx.is_directed_acyclic_graph(G),
+        "density":      round(nx.density(G), 4),
+        # Cytoscape page compat keys
+        "main_topics":  len(topics),
+        "prerequisites": 0,
+        "mastered":     0,
+        "in_progress":  0,
+        "not_started":  len(topics),
     }
+
+    # Enrich with mastery data if username provided
+    if username:
+        try:
+            from backend.progress_tracker import get_user_progress
+            user_progress = get_user_progress(username)
+            mastered    = sum(1 for t in topics if user_progress.get(t, {}).get("mastery", 0) >= 76)
+            in_progress = sum(1 for t in topics if 0 < user_progress.get(t, {}).get("mastery", 0) < 76)
+            stats["mastered"]     = mastered
+            stats["in_progress"]  = in_progress
+            stats["not_started"]  = len(topics) - mastered - in_progress
+        except Exception:
+            pass
+
+    return stats
 
 
 def get_all_concepts_for_topic(topic: str) -> list:
