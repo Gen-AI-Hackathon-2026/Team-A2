@@ -1,6 +1,10 @@
 """
 Synapse AI Tutor -- Main Application Entry Point
-Adaptive AI Tutoring System with RAG, GPT-OSS, and PDF Chat.
+Adaptive AI Tutoring System with GraphRAG, Ollama GPT-OSS, and PDF Chat.
+
+Navigation: Sidebar-based (knowledge-graph branch style).
+Routing key: st.session_state.page
+LLM: Ollama gpt-oss:20b on local network.
 """
 
 import streamlit as st
@@ -10,7 +14,6 @@ import sys
 sys.path.insert(0, os.path.dirname(__file__))
 
 from pages.login import render_login
-from pages.home import render_home
 from pages.topic_selection import render_topic_selection
 from pages.assessment import render_assessment
 from pages.tutor import render_tutor
@@ -25,14 +28,14 @@ from pages.knowledge_vault import render_knowledge_vault
 
 
 # ---------------------------------------------------------------------------
-# Page config – must be first Streamlit call
+# Page config -- must be first Streamlit call
 # ---------------------------------------------------------------------------
 def configure_page():
     st.set_page_config(
         page_title="Synapse AI Tutor",
         page_icon="S",
         layout="wide",
-        initial_sidebar_state="collapsed",
+        initial_sidebar_state="expanded",
     )
 
 
@@ -40,299 +43,162 @@ def configure_page():
 # Global CSS
 # ---------------------------------------------------------------------------
 def inject_global_styles():
-    st.markdown(
-        """
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    st.markdown("""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
-/* ── Base ──────────────────────────────────────────────────────────────────── */
-:root {
-    --primary: #6C63FF;
-    --primary-dark: #5A52D5;
-    --secondary: #00D2FF;
-    --success: #2ECC71;
-    --warning: #F39C12;
-    --danger: #E74C3C;
-    --bg: #0A0A1A;
-    --bg-card: #12122A;
-    --bg-card2: #1A1A3E;
-    --text: #FFFFFF;
-    --text-dim: #A0A0C0;
-    --text-muted: #6B6B8D;
-    --border: rgba(108,99,255,0.15);
-    --radius: 14px;
-    --radius-sm: 8px;
-    --shadow: 0 6px 24px rgba(0,0,0,0.35);
-    --nav-height: 56px;
-}
+    :root {
+        --primary: #6C63FF; --primary-dark: #5A52D5; --primary-light: #8B83FF;
+        --secondary: #00D2FF; --accent: #FF6B6B; --accent-warm: #FFB347;
+        --success: #2ECC71; --warning: #F39C12; --danger: #E74C3C;
+        --bg-dark: #0A0A1A; --bg-card: #12122A; --bg-card-hover: #1A1A3E;
+        --text-primary: #FFFFFF; --text-secondary: #A0A0C0; --text-muted: #6B6B8D;
+        --border: #2A2A4A;
+        --gradient-1: linear-gradient(135deg, #6C63FF, #00D2FF);
+        --gradient-2: linear-gradient(135deg, #FF6B6B, #FFB347);
+        --gradient-3: linear-gradient(135deg, #2ECC71, #00D2FF);
+        --radius: 16px; --radius-sm: 10px;
+        --shadow: 0 8px 32px rgba(0,0,0,0.3);
+        --shadow-glow: 0 0 20px rgba(108,99,255,0.2);
+    }
 
-html, body, .stApp {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
-    background: var(--bg) !important;
-    color: var(--text) !important;
-}
+    .stApp {
+        background: linear-gradient(135deg, #0A0A1A 0%, #0D0D2B 50%, #0A0A1A 100%) !important;
+        font-family: 'Inter', -apple-system, sans-serif !important;
+    }
 
-/* ── Hide Streamlit chrome ──────────────────────────────────────────────────── */
-#MainMenu, footer, header { visibility: hidden !important; }
-section[data-testid="stSidebar"] { display: none !important; }
-[data-testid="collapsedControl"] { display: none !important; }
-.stDeployButton { display: none !important; }
+    /* ── Sidebar ─────────────────────────────────────────────────────────── */
+    section[data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #0D0D2B 0%, #12122A 100%) !important;
+        border-right: 1px solid var(--border) !important;
+    }
+    section[data-testid="stSidebar"] .stButton > button {
+        border-radius: 8px !important;
+        font-size: 0.85rem !important;
+        font-weight: 500 !important;
+    }
 
-/* ── Top Navigation ─────────────────────────────────────────────────────────── */
-.topnav {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    height: var(--nav-height);
-    background: #080816;
-    border-bottom: 1px solid var(--border);
-    box-shadow: 0 2px 16px rgba(0,0,0,0.4);
-    z-index: 9999;
-    display: flex;
-    align-items: center;
-    padding: 0 1.2rem;
-    gap: 0.15rem;
-}
+    /* ── Cards ───────────────────────────────────────────────────────────── */
+    .synapse-card {
+        background: linear-gradient(145deg, #14142E, #1A1A3E);
+        border: 1px solid rgba(108,99,255,0.15);
+        border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1rem;
+        transition: all 0.3s cubic-bezier(0.4,0,0.2,1); box-shadow: var(--shadow);
+    }
+    .synapse-card:hover {
+        border-color: rgba(108,99,255,0.4);
+        box-shadow: var(--shadow-glow);
+        transform: translateY(-2px);
+    }
 
-.topnav-brand {
-    font-size: 1rem;
-    font-weight: 800;
-    background: linear-gradient(135deg, #6C63FF, #00D2FF);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    margin-right: 1.8rem;
-    white-space: nowrap;
-    flex-shrink: 0;
-}
+    .topic-card {
+        background: linear-gradient(145deg, #14142E, #1A1A3E);
+        border: 1px solid rgba(108,99,255,0.15); border-radius: var(--radius);
+        padding: 1.2rem 0.8rem; text-align: center; cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4,0,0.2,1); box-shadow: var(--shadow);
+        min-height: 155px; display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+    }
+    .topic-card:hover {
+        border-color: rgba(108,99,255,0.5);
+        box-shadow: 0 0 30px rgba(108,99,255,0.25);
+        transform: translateY(-4px);
+    }
+    .topic-card .topic-name { font-size: 0.9rem; font-weight: 600; color: #FFFFFF; margin-bottom: 0.3rem; }
+    .topic-card .topic-desc { font-size: 0.68rem; color: #A0A0C0; line-height: 1.3; }
 
-/* ── Functional nav button strip ─────────────────────────────────────────────── */
-.nav-strip {
-    position: fixed;
-    top: var(--nav-height);
-    left: 0; right: 0;
-    background: #0B0B1E;
-    border-bottom: 1px solid rgba(108,99,255,0.1);
-    z-index: 9998;
-    display: flex;
-    align-items: center;
-    padding: 0 1rem;
-    height: 42px;
-    gap: 2px;
-    overflow-x: auto;
-}
-.nav-strip::-webkit-scrollbar { display: none; }
+    /* ── Typography ──────────────────────────────────────────────────────── */
+    .gradient-text {
+        background: linear-gradient(135deg, #6C63FF, #00D2FF);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800;
+    }
+    .main-header { text-align: center; padding: 1.5rem 0 1rem 0; }
+    .main-header h1 {
+        font-size: 2.5rem; font-weight: 900;
+        background: linear-gradient(135deg, #6C63FF 0%, #00D2FF 50%, #6C63FF 100%);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        margin-bottom: 0.5rem;
+    }
+    .main-header p { color: #A0A0C0; font-size: 1rem; }
 
-/* Override Streamlit button in nav strip */
-.nav-strip .stButton > button {
-    background: transparent !important;
-    border: 1px solid transparent !important;
-    border-radius: 6px !important;
-    padding: 0.22rem 0.7rem !important;
-    font-size: 0.8rem !important;
-    font-weight: 500 !important;
-    color: #A0A0C0 !important;
-    box-shadow: none !important;
-    white-space: nowrap !important;
-    height: 30px !important;
-    min-height: 30px !important;
-    letter-spacing: 0.01em !important;
-    transition: all 0.15s ease !important;
-}
-.nav-strip .stButton > button:hover {
-    background: rgba(108,99,255,0.12) !important;
-    color: #FFFFFF !important;
-    border-color: rgba(108,99,255,0.3) !important;
-    transform: none !important;
-}
-.nav-active .stButton > button {
-    background: linear-gradient(135deg, rgba(108,99,255,0.35), rgba(0,210,255,0.15)) !important;
-    border-color: rgba(108,99,255,0.5) !important;
-    color: #FFFFFF !important;
-    font-weight: 600 !important;
-    box-shadow: 0 1px 8px rgba(108,99,255,0.2) !important;
-}
-.nav-logout .stButton > button {
-    color: #FF6B6B !important;
-    border-color: rgba(255,107,107,0.2) !important;
-}
-.nav-logout .stButton > button:hover {
-    background: rgba(255,107,107,0.1) !important;
-    border-color: rgba(255,107,107,0.4) !important;
-    color: #FF8A8A !important;
-}
+    /* ── Stat cards ──────────────────────────────────────────────────────── */
+    .stat-card {
+        background: linear-gradient(145deg, #14142E, #1A1A3E);
+        border: 1px solid rgba(108,99,255,0.12);
+        border-radius: var(--radius-sm); padding: 0.8rem 1rem;
+        text-align: center;
+    }
+    .stat-value { font-size: 1.8rem; font-weight: 800; color: #FFFFFF; }
+    .stat-label { font-size: 0.72rem; color: #A0A0C0; text-transform: uppercase; letter-spacing: 0.8px; }
 
-/* ── Page content spacer ────────────────────────────────────────────────────── */
-.page-spacer {
-    height: calc(var(--nav-height) + 42px + 0.5rem);
-}
+    /* ── Badges ──────────────────────────────────────────────────────────── */
+    .badge {
+        display: inline-block; padding: 0.2rem 0.6rem;
+        border-radius: 20px; font-size: 0.65rem; font-weight: 600;
+        text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .badge-beginner    { background: rgba(46,204,113,0.15); color: #2ECC71; border: 1px solid rgba(46,204,113,0.3); }
+    .badge-intermediate{ background: rgba(243,156,18,0.15); color: #F39C12; border: 1px solid rgba(243,156,18,0.3); }
+    .badge-advanced    { background: rgba(139,131,255,0.15); color: #8B83FF; border: 1px solid rgba(139,131,255,0.3); }
 
-/* ── Context bar ─────────────────────────────────────────────────────────────── */
-.context-bar {
-    background: rgba(108,99,255,0.04);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 0.55rem 1rem;
-    margin-bottom: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 1.8rem;
-    flex-wrap: wrap;
-}
-.context-item-label {
-    font-size: 0.6rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--text-muted);
-    font-weight: 600;
-}
-.context-item-value {
-    font-size: 0.8rem;
-    color: var(--text);
-    font-weight: 500;
-}
+    /* ── Gap warning ─────────────────────────────────────────────────────── */
+    .gap-warning {
+        background: rgba(243,156,18,0.06);
+        border-left: 4px solid #F39C12;
+        border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+        padding: 0.8rem 1rem; margin: 0.5rem 0;
+    }
 
-/* ── Cards ────────────────────────────────────────────────────────────────────── */
-.synapse-card {
-    background: linear-gradient(145deg, var(--bg-card), var(--bg-card2));
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 1.2rem 1.4rem;
-    margin-bottom: 0.8rem;
-    box-shadow: var(--shadow);
-}
+    /* ── Source citations ────────────────────────────────────────────────── */
+    .source-citation {
+        background: rgba(108,99,255,0.05); border: 1px solid rgba(108,99,255,0.12);
+        border-radius: 8px; padding: 0.6rem 0.9rem; margin-bottom: 0.4rem;
+    }
+    .source-book { color: #8B83FF; font-weight: 600; font-size: 0.8rem; }
+    .source-page { color: #6B6B8D; font-size: 0.75rem; }
 
-.stat-card {
-    background: linear-gradient(145deg, var(--bg-card), var(--bg-card2));
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 0.9rem 1rem;
-    text-align: center;
-}
-.stat-value {
-    font-size: 1.7rem;
-    font-weight: 800;
-    background: linear-gradient(135deg, #6C63FF, #00D2FF);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-.stat-label { font-size: 0.75rem; color: var(--text-dim); margin-top: 0.15rem; }
+    /* ── Fallback warning ────────────────────────────────────────────────── */
+    .fallback-warning {
+        background: rgba(231,76,60,0.08); border-left: 4px solid #E74C3C;
+        border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+        padding: 0.8rem 1rem; margin: 0.5rem 0;
+    }
 
-/* ── Topic cards ──────────────────────────────────────────────────────────────── */
-.topic-card {
-    background: linear-gradient(145deg, var(--bg-card), var(--bg-card2));
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 1rem 0.7rem;
-    text-align: center;
-    min-height: 148px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-}
-.topic-card .topic-name { font-size: 0.85rem; font-weight: 600; color: var(--text); margin-bottom: 0.25rem; }
-.topic-card .topic-desc { font-size: 0.67rem; color: var(--text-dim); line-height: 1.3; }
+    /* ── Difficulty badges ───────────────────────────────────────────────── */
+    .diff-easy         { color: #2ECC71; }
+    .diff-intermediate { color: #F39C12; }
+    .diff-hard         { color: #8B83FF; }
 
-/* ── Badges ────────────────────────────────────────────────────────────────────── */
-.badge { display: inline-block; padding: 0.18rem 0.6rem; border-radius: 20px; font-size: 0.7rem; font-weight: 600; }
-.badge-beginner    { background: rgba(46,204,113,0.12); color: #2ECC71; border: 1px solid rgba(46,204,113,0.3); }
-.badge-intermediate{ background: rgba(243,156,18,0.12); color: #F39C12; border: 1px solid rgba(243,156,18,0.3); }
-.badge-advanced    { background: rgba(108,99,255,0.12); color: #8B83FF; border: 1px solid rgba(108,99,255,0.3); }
+    /* ── Animations ──────────────────────────────────────────────────────── */
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in { animation: fadeInUp 0.6s ease-out; }
 
-/* ── Global buttons ─────────────────────────────────────────────────────────── */
-.stButton > button {
-    background: linear-gradient(135deg, #6C63FF, #5A52D5) !important;
-    color: white !important;
-    border: none !important;
-    border-radius: var(--radius-sm) !important;
-    padding: 0.5rem 1.2rem !important;
-    font-weight: 600 !important;
-    font-family: 'Inter', sans-serif !important;
-    transition: opacity 0.2s ease !important;
-    box-shadow: 0 3px 12px rgba(108,99,255,0.25) !important;
-}
-.stButton > button:hover {
-    opacity: 0.88 !important;
-    transform: none !important;
-    box-shadow: 0 3px 12px rgba(108,99,255,0.4) !important;
-}
+    /* ── Scrollbar ───────────────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0A0A1A; }
+    ::-webkit-scrollbar-thumb { background: #2A2A4A; border-radius: 3px; }
 
-/* ── Other UI elements ───────────────────────────────────────────────────────── */
-.gradient-text {
-    background: linear-gradient(135deg, #6C63FF, #00D2FF);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    font-weight: 800;
-}
-.main-header { text-align: center; padding: 0.8rem 0 0.8rem 0; }
-.main-header h1 {
-    font-size: 2rem; font-weight: 800;
-    background: linear-gradient(135deg, #6C63FF, #00D2FF);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    margin-bottom: 0.3rem; letter-spacing: -0.02em;
-}
-.main-header p { color: var(--text-dim); font-size: 0.9rem; }
-
-.gap-warning {
-    background: rgba(243,156,18,0.07);
-    border-left: 3px solid #F39C12;
-    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-    padding: 0.7rem 1rem;
-    margin: 0.4rem 0;
-}
-.source-citation {
-    background: rgba(0,210,255,0.04);
-    border: 1px solid rgba(0,210,255,0.15);
-    border-radius: var(--radius-sm);
-    padding: 0.6rem 0.9rem;
-    margin: 0.3rem 0;
-    font-size: 0.82rem;
-}
-.source-citation .source-book { color: #00D2FF; font-weight: 600; }
-.source-citation .source-page { color: var(--text-dim); }
-.fallback-warning {
-    background: rgba(231,76,60,0.07);
-    border-left: 3px solid #E74C3C;
-    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-    padding: 0.7rem 1rem;
-    margin: 0.4rem 0;
-}
-
-.stProgress > div > div {
-    background: linear-gradient(135deg, #6C63FF, #00D2FF) !important;
-    border-radius: 10px !important;
-}
-.stChatMessage {
-    border-radius: var(--radius) !important;
-    border: 1px solid var(--border) !important;
-}
-[data-testid="stMetric"] {
-    background: linear-gradient(145deg, var(--bg-card), var(--bg-card2));
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 0.9rem 1rem;
-}
-
-::-webkit-scrollbar { width: 5px; }
-::-webkit-scrollbar-track { background: #0A0A1A; }
-::-webkit-scrollbar-thumb { background: #2A2A4A; border-radius: 3px; }
-hr { border-color: rgba(108,99,255,0.1) !important; }
-
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-.fade-in { animation: fadeIn 0.4s ease-out; }
-</style>
-""",
-        unsafe_allow_html=True,
-    )
+    /* ── Hide Streamlit chrome ───────────────────────────────────────────── */
+    hr     { border-color: rgba(108,99,255,0.1) !important; }
+    #MainMenu { visibility: hidden; }
+    footer    { visibility: hidden; }
+    header    { visibility: hidden; }
+    </style>
+    """, unsafe_allow_html=True)
 
 
 # ---------------------------------------------------------------------------
-# Session state initialisation
+# Session state defaults
 # ---------------------------------------------------------------------------
 def init_session_state():
     defaults = {
+        # Auth
         "authenticated": False,
         "username": None,
-        "page": "Home",
+        "page": "login",
         # Topics
         "selected_topics": [],
         "selected_topic": None,
@@ -342,20 +208,25 @@ def init_session_state():
         "assessment_complete": False,
         "assessment_result": None,
         "current_question_idx": 0,
-        "topic_banks": None,
-        "topic_queue": [],
-        "topic_queue_idx": 0,
-        # RAG
+        # RAG / LLM
         "rag_pipeline": None,
         "rag_initialized": False,
-        # Tutor chat histories (per-topic)
+        # Question bank
+        "topic_banks": None,
+        # Chat history (per-topic)
         "chat_histories": {},
-        # Chatbot
-        "chatbot_history": [],
-        "pdf_chunks": None,
-        "pdf_index": None,
-        "pdf_filename": None,
-        "chatbot_use_pdf": False,
+        "tutor_response": None,
+        # Topic queue for multi-topic flow
+        "topic_queue": [],
+        "topic_queue_idx": 0,
+        # Roadmap & Notes
+        "generated_notes": {},
+        "current_roadmap": None,
+        "roadmap_topic": None,
+        "_viewing_note": None,
+        "_vault_viewing": None,
+        "_note_viewer_topic": None,
+        "_graph_view": "full",
     }
     for key, value in defaults.items():
         if key not in st.session_state:
@@ -363,155 +234,112 @@ def init_session_state():
 
 
 # ---------------------------------------------------------------------------
-# Navigation pages config
+# Sidebar
 # ---------------------------------------------------------------------------
-NAV_PAGES = [
-    "Home",
-    "Topics",
-    "Assessment",
-    "Tutor",
-    "Chatbot",
-    "Visualizer",
-    "Dashboard",
-    "Resources",
-]
-
-# Map display labels -> session-state page keys used in routing
-PAGE_KEY = {
-    "Home":       "Home",
-    "Topics":     "Topics",
-    "Assessment": "Assessment",
-    "Tutor":      "Tutor",
-    "Chatbot":    "Chatbot",
-    "Visualizer": "Visualizer",
-    "Dashboard":  "Dashboard",
-    "Resources":  "Resources",
-}
-
-
-def _go(page: str):
-    st.session_state.page = page
-    st.rerun()
-
-
-# ---------------------------------------------------------------------------
-# Visual-only top bar (brand + user info, pure HTML)
-# ---------------------------------------------------------------------------
-def render_topnav_html():
-    username = st.session_state.get("username", "")
-    first = username[0].upper() if username else "?"
-    st.markdown(
-        f"""
-<div class="topnav">
-    <span class="topnav-brand">Synapse AI Tutor</span>
-    <div style="margin-left:auto;display:flex;align-items:center;gap:0.7rem;">
-        <div style="background:rgba(108,99,255,0.15);border:1px solid rgba(108,99,255,0.3);
-                    border-radius:20px;padding:0.25rem 0.8rem 0.25rem 0.5rem;
-                    display:flex;align-items:center;gap:0.45rem;">
-            <div style="width:22px;height:22px;border-radius:50%;
+def render_sidebar():
+    with st.sidebar:
+        # Logo
+        st.markdown("""
+        <div style="text-align:center;padding:1rem 0 0.5rem;">
+            <div style="font-size:2.2rem;font-weight:900;
                         background:linear-gradient(135deg,#6C63FF,#00D2FF);
-                        display:flex;align-items:center;justify-content:center;
-                        font-size:0.68rem;font-weight:700;color:white;flex-shrink:0;">{first}</div>
-            <span style="font-size:0.78rem;font-weight:600;color:#FFFFFF;">{username}</span>
+                        -webkit-background-clip:text;-webkit-text-fill-color:transparent;">SYN</div>
+            <div style="color:#FFFFFF;font-weight:700;font-size:1rem;margin-top:0.1rem;">Synapse</div>
+            <div style="color:#A0A0C0;font-size:0.75rem;">Adaptive AI Tutor</div>
         </div>
-    </div>
-</div>
-""",
-        unsafe_allow_html=True,
-    )
+        """, unsafe_allow_html=True)
+        st.divider()
 
+        if not st.session_state.authenticated:
+            return
 
-# ---------------------------------------------------------------------------
-# Functional navigation strip (Streamlit buttons)
-# ---------------------------------------------------------------------------
-def render_nav_strip(current: str):
-    st.markdown('<div class="nav-strip">', unsafe_allow_html=True)
-    total = len(NAV_PAGES) + 1  # +1 for Logout
-    cols = st.columns(total)
+        # User badge
+        st.markdown(f"""
+        <div style="background:rgba(108,99,255,0.08);border-radius:10px;
+                    padding:0.7rem 1rem;margin-bottom:1rem;">
+            <div style="color:#A0A0C0;font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;">Logged in as</div>
+            <div style="color:#FFFFFF;font-weight:600;font-size:0.9rem;">{st.session_state.username}</div>
+        </div>
+        """, unsafe_allow_html=True)
 
-    for i, label in enumerate(NAV_PAGES):
-        active_cls = "nav-active" if current == label else ""
-        st.markdown(f'<div class="{active_cls}">', unsafe_allow_html=True)
-        with cols[i]:
-            if st.button(label, key=f"nav_{label}", use_container_width=False):
-                _go(label)
-        st.markdown("</div>", unsafe_allow_html=True)
+        # Navigation
+        nav_items = [
+            ("topic_selection",  "Topics"),
+            ("assessment",       "Assessment"),
+            ("tutor",            "Tutor"),
+            ("roadmap",          "Roadmap"),
+            ("knowledge_vault",  "Vault"),
+            ("knowledge_graph",  "Graph"),
+            ("dashboard",        "Dashboard"),
+            ("Chatbot",          "Chatbot"),
+            ("Visualizer",       "Visualizer"),
+            ("Resources",        "Resources"),
+        ]
 
-    # Logout
-    st.markdown('<div class="nav-logout">', unsafe_allow_html=True)
-    with cols[len(NAV_PAGES)]:
-        if st.button("Logout", key="nav_logout", use_container_width=False):
-            for k in list(st.session_state.keys()):
-                del st.session_state[k]
+        current = st.session_state.page
+        for page_key, label in nav_items:
+            is_active = (current == page_key)
+            if st.button(
+                label,
+                key=f"nav_{page_key}",
+                use_container_width=True,
+                type="primary" if is_active else "secondary",
+            ):
+                st.session_state.page = page_key
+                st.rerun()
+
+        st.divider()
+
+        # Selected topics list
+        if st.session_state.selected_topics:
+            st.markdown("""
+            <div style="color:#A0A0C0;font-size:0.65rem;text-transform:uppercase;
+                        letter-spacing:1px;margin-bottom:0.4rem;">Selected Topics</div>
+            """, unsafe_allow_html=True)
+            for t in st.session_state.selected_topics[:4]:
+                short = (t[:20] + "...") if len(t) > 20 else t
+                st.markdown(f"""
+                <div style="color:#00D2FF;font-size:0.78rem;padding:0.18rem 0.5rem;
+                            background:rgba(0,210,255,0.06);border-radius:6px;margin-bottom:0.18rem;">
+                    {short}
+                </div>""", unsafe_allow_html=True)
+            if len(st.session_state.selected_topics) > 4:
+                st.markdown(
+                    f"<div style='color:#6B6B8D;font-size:0.7rem;'>+{len(st.session_state.selected_topics)-4} more</div>",
+                    unsafe_allow_html=True,
+                )
+            st.divider()
+
+        # Logout
+        if st.button("Logout", use_container_width=True):
+            for key in list(st.session_state.keys()):
+                del st.session_state[key]
             st.rerun()
-    st.markdown("</div>", unsafe_allow_html=True)
 
-    st.markdown("</div>", unsafe_allow_html=True)
+        st.divider()
 
-
-# ---------------------------------------------------------------------------
-# Context bar (user / topics / levels) — shown on every authenticated page
-# ---------------------------------------------------------------------------
-def render_context_bar():
-    username = st.session_state.get("username", "")
-    selected_topics = st.session_state.get("selected_topics", [])
-
-    topics_display = ", ".join(selected_topics[:3]) if selected_topics else "None selected"
-    if len(selected_topics) > 3:
-        topics_display += f" +{len(selected_topics) - 3} more"
-
-    try:
-        from backend.progress_tracker import get_topic_progress
-        lparts = []
-        for t in selected_topics[:2]:
-            p = get_topic_progress(username, t)
-            lv = p.get("level", "Not Assessed")
-            if lv != "Not Assessed":
-                lc = {"Beginner": "#2ECC71", "Intermediate": "#F39C12", "Advanced": "#8B83FF"}.get(lv, "#A0A0C0")
-                short = (t[:14] + "...") if len(t) > 14 else t
-                lparts.append(f"<span style='color:{lc};font-weight:600;'>{short}: {lv}</span>")
-        levels_html = " &nbsp;|&nbsp; ".join(lparts) if lparts else "<span style='color:#6B6B8D;'>Not assessed yet</span>"
-    except Exception:
-        levels_html = "<span style='color:#6B6B8D;'>-</span>"
-
-    rag_ready = st.session_state.get("rag_initialized", False)
-    rag_color = "#2ECC71" if rag_ready else "#F39C12"
-    rag_label = "Ready" if rag_ready else "Loading"
-
-    st.markdown(
-        f"""
-<div class="context-bar">
-    <div>
-        <div class="context-item-label">Logged in as</div>
-        <div class="context-item-value" style="color:#8B83FF;font-weight:700;">{username}</div>
-    </div>
-    <div style="width:1px;height:26px;background:rgba(255,255,255,0.06);"></div>
-    <div>
-        <div class="context-item-label">Selected Topics</div>
-        <div class="context-item-value" style="color:#00D2FF;">{topics_display}</div>
-    </div>
-    <div style="width:1px;height:26px;background:rgba(255,255,255,0.06);"></div>
-    <div>
-        <div class="context-item-label">Current Levels</div>
-        <div style="font-size:0.8rem;">{levels_html}</div>
-    </div>
-    <div style="width:1px;height:26px;background:rgba(255,255,255,0.06);margin-left:auto;"></div>
-    <div>
-        <div class="context-item-label">Knowledge Base</div>
-        <div class="context-item-value" style="color:{rag_color};">RAG {rag_label}</div>
-    </div>
-</div>
-""",
-        unsafe_allow_html=True,
-    )
+        # RAG status
+        if st.session_state.get("rag_initialized"):
+            rag    = st.session_state.rag_pipeline
+            status = rag.get_status()
+            st.markdown(f"""
+            <div style="font-size:0.7rem;color:#A0A0C0;padding:0.35rem;">
+                <div style="color:#2ECC71;font-weight:600;margin-bottom:0.2rem;">RAG Active</div>
+                <div>{status['num_chunks']} chunks | {status['num_vectors']} vectors</div>
+                <div style="color:#8B83FF;margin-top:0.15rem;font-size:0.65rem;">GraphRAG Enabled</div>
+            </div>""", unsafe_allow_html=True)
+        else:
+            st.markdown("""
+            <div style="font-size:0.7rem;color:#6B6B8D;padding:0.35rem;">RAG: Initializing...</div>
+            """, unsafe_allow_html=True)
 
 
 # ---------------------------------------------------------------------------
-# RAG initialisation (cached)
+# RAG initialisation (cached across all reruns)
 # ---------------------------------------------------------------------------
 @st.cache_resource(show_spinner=False)
 def _load_rag_pipeline():
-    """Load and initialise RAG pipeline once per server session."""
+    """Load and initialise the RAG pipeline once per server session."""
     from backend.rag import RAGPipeline
     rag = RAGPipeline()
     rag.initialize()
@@ -525,62 +353,57 @@ def initialize_rag():
             if rag.is_ready:
                 st.session_state.rag_pipeline = rag
                 st.session_state.rag_initialized = True
+            else:
+                st.warning("Knowledge base not ready. Tutor will work without textbook context.")
         except Exception as e:
-            st.warning(f"Knowledge base unavailable: {e}")
+            st.warning(f"Knowledge base error: {e}")
 
 
 # ---------------------------------------------------------------------------
-# Main
+# Main router
 # ---------------------------------------------------------------------------
 def main():
     configure_page()
     inject_global_styles()
     init_session_state()
+    render_sidebar()
 
-    # ── Not logged in — show login
     if not st.session_state.authenticated:
         render_login()
         return
 
-    # ── Logged in
     initialize_rag()
-    render_topnav_html()
 
-    current = st.session_state.get("page", "Home")
-    render_nav_strip(current)
+    page = st.session_state.page
 
-    # Spacer so content clears both fixed bars
-    st.markdown('<div class="page-spacer"></div>', unsafe_allow_html=True)
-
-    render_context_bar()
-
-    # ── Route
-    if current == "Home":
-        render_home()
-    elif current == "Topics":
+    # Core pages
+    if page == "topic_selection":
         render_topic_selection()
-    elif current == "Assessment":
+    elif page == "assessment":
         render_assessment()
-    elif current == "Tutor":
+    elif page == "tutor":
         render_tutor()
-    elif current == "Chatbot":
-        render_chatbot()
-    elif current == "Visualizer":
-        render_visualizer()
-    elif current == "Dashboard":
+    elif page == "dashboard":
         render_dashboard()
-    elif current == "Resources":
-        render_resources()
-    elif current == "knowledge_graph":
-        render_knowledge_graph()
-    elif current == "roadmap":
+    # New pages from knowledge-graph branch
+    elif page == "roadmap":
         render_roadmap()
-    elif current == "note_viewer":
+    elif page == "note_viewer":
         render_note_viewer()
-    elif current == "knowledge_vault":
+    elif page == "knowledge_vault":
         render_knowledge_vault()
+    elif page == "knowledge_graph":
+        render_knowledge_graph()
+    # Pages kept from main (top-nav era)
+    elif page == "Chatbot":
+        render_chatbot()
+    elif page == "Visualizer":
+        render_visualizer()
+    elif page == "Resources":
+        render_resources()
     else:
-        render_home()
+        # Default landing
+        render_topic_selection()
 
 
 if __name__ == "__main__":
