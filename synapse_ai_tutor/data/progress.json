@@ -17,20 +17,255 @@
       "last_accessed": "2026-05-30T21:33:44.450183",
       "completed": false
     },
-    "Neural Networks": {
-      "mastery": 60,
-      "level": "Intermediate",
-      "scores": [
-        60
-      ],
-      "weak_areas": [
+    "CNNs": {
+      "mastery": 3,
+      "level": "Beginner",
+      "score": 1,
+      "max_score": 30,
+      "knowledge_gaps": [
+        "Convolution Operations",
+        "Pooling Layers",
+        "Feature Maps",
+        "Neural Networks",
         "Linear Algebra",
-        "Calculus (Derivatives & Chain Rule)",
-        "Probability & Statistics"
+        "Image Processing Basics",
+        "Feature Extraction",
+        "Optimization"
       ],
+      "assessment_history": [
+        {
+          "date": "2026-05-31T00:26:41.285741",
+          "score": 1,
+          "max_score": 30,
+          "level": "Beginner",
+          "mastery": 3
+        }
+      ],
+      "practice_history": [],
       "sessions": 1,
-      "last_accessed": "2026-05-30T21:42:45.891990",
+      "last_accessed": "2026-05-31T00:28:27.574893",
       "completed": false
+    },
+    "RNNs": {
+      "mastery": 23,
+      "level": "Beginner",
+      "score": 7,
+      "max_score": 30,
+      "knowledge_gaps": [
+        "Hidden States",
+        "LSTM Gates",
+        "GRU Architecture",
+        "Neural Networks",
+        "Sequence Modeling",
+        "Backpropagation Through Time"
+      ],
+      "assessment_history": [
+        {
+          "date": "2026-05-31T00:29:55.119857",
+          "score": 7,
+          "max_score": 30,
+          "level": "Beginner",
+          "mastery": 23
+        }
+      ],
+      "practice_history": [],
+      "sessions": 1,
+      "last_accessed": "2026-05-31T00:29:55.119882",
+      "completed": false,
+      "roadmap": [
+        {
+          "name": "Neural Networks",
+          "description": "Core building blocks of deep learning — layers, weights, and training",
+          "status": "complete",
+          "order": 0,
+          "is_current": false,
+          "step_type": "prerequisite"
+        },
+        {
+          "name": "Sequence Modeling",
+          "description": "Techniques for processing sequential and temporal data",
+          "status": "current",
+          "order": 1,
+          "is_current": true,
+          "step_type": "prerequisite"
+        },
+        {
+          "name": "Backpropagation Through Time",
+          "description": "Training algorithm for recurrent neural networks",
+          "status": "locked",
+          "order": 2,
+          "is_current": false,
+          "step_type": "prerequisite"
+        },
+        {
+          "name": "Linear Algebra",
+          "description": "Vectors, matrices, and operations fundamental to neural networks",
+          "status": "locked",
+          "order": 3,
+          "is_current": false,
+          "step_type": "prerequisite"
+        },
+        {
+          "name": "Optimization",
+          "description": "Methods for finding optimal model parameters",
+          "status": "locked",
+          "order": 4,
+          "is_current": false,
+          "step_type": "prerequisite"
+        },
+        {
+          "name": "Hidden States",
+          "description": "Internal memory representations in recurrent networks",
+          "status": "locked",
+          "order": 5,
+          "is_current": false,
+          "step_type": "core"
+        },
+        {
+          "name": "LSTM Gates",
+          "description": "Gating mechanisms in Long Short-Term Memory networks",
+          "status": "locked",
+          "order": 6,
+          "is_current": false,
+          "step_type": "core"
+        },
+        {
+          "name": "GRU Architecture",
+          "description": "Simplified gated recurrent unit design",
+          "status": "locked",
+          "order": 7,
+          "is_current": false,
+          "step_type": "core"
+        },
+        {
+          "name": "RNNs",
+          "description": "Recurrent Neural Networks for sequential and temporal data",
+          "status": "locked",
+          "order": 8,
+          "is_current": false,
+          "step_type": "core"
+        }
+      ],
+      "roadmap_generated_at": "2026-05-31T00:29:59.047468"
+    },
+    "_notes_metadata": {
+      "Neural Networks": {
+        "filepath": "C:\\simran\\3rd year\\6th sem\\gen-ai\\hackathon\\Team-A2\\synapse_ai_tutor\\data\\notes\\demo\\neural_networks.md",
+        "created_at": "2026-05-31T00:30:16.075472",
+        "updated_at": "2026-05-31T00:30:16.075489"
+      },
+      "Sequence Modeling": {
+        "filepath": "C:\\simran\\3rd year\\6th sem\\gen-ai\\hackathon\\Team-A2\\synapse_ai_tutor\\data\\notes\\demo\\sequence_modeling.md",
+        "created_at": "2026-05-31T00:31:06.095539",
+        "updated_at": "2026-05-31T00:31:06.095558"
+      },
+      "Vectors & Embeddings": {
+        "filepath": "C:\\simran\\3rd year\\6th sem\\gen-ai\\hackathon\\Team-A2\\synapse_ai_tutor\\data\\notes\\demo\\vectors_and_embeddings.md",
+        "created_at": "2026-05-31T00:39:01.207340",
+        "updated_at": "2026-05-31T00:39:01.207360"
+      }
+    },
+    "Transformers": {
+      "mastery": 20,
+      "level": "Beginner",
+      "score": 6,
+      "max_score": 30,
+      "knowledge_gaps": [
+        "Self-Attention",
+        "Multi-Head Attention",
+        "Positional Encoding",
+        "Vectors & Embeddings",
+        "Sequence Modeling",
+        "Attention Mechanisms"
+      ],
+      "assessment_history": [
+        {
+          "date": "2026-05-31T00:38:46.852148",
+          "score": 6,
+          "max_score": 30,
+          "level": "Beginner",
+          "mastery": 20
+        }
+      ],
+      "practice_history": [],
+      "sessions": 1,
+      "last_accessed": "2026-05-31T00:38:46.852167",
+      "completed": false,
+      "roadmap": [
+        {
+          "name": "Vectors & Embeddings",
+          "description": "Numerical representations of data in high-dimensional space",
+          "status": "current",
+          "order": 0,
+          "is_current": true,
+          "step_type": "prerequisite"
+        },
+        {
+          "name": "Sequence Modeling",
+          "description": "Techniques for processing sequential and temporal data",
+          "status": "locked",
+          "order": 1,
+          "is_current": false,
+          "step_type": "prerequisite"
+        },
+        {
+          "name": "Attention Mechanisms",
+          "description": "Selective focus mechanisms in neural networks",
+          "status": "locked",
+          "order": 2,
+          "is_current": false,
+          "step_type": "prerequisite"
+        },
+        {
+          "name": "Neural Networks",
+          "description": "Core building blocks of deep learning — layers, weights, and training",
+          "status": "locked",
+          "order": 3,
+          "is_current": false,
+          "step_type": "prerequisite"
+        },
+        {
+          "name": "Matrix Multiplication",
+          "description": "Core linear algebra operation used in transformers",
+          "status": "locked",
+          "order": 4,
+          "is_current": false,
+          "step_type": "prerequisite"
+        },
+        {
+          "name": "Self-Attention",
+          "description": "Mechanism for relating different positions in a sequence",
+          "status": "locked",
+          "order": 5,
+          "is_current": false,
+          "step_type": "core"
+        },
+        {
+          "name": "Multi-Head Attention",
+          "description": "Parallel attention mechanisms for richer representations",
+          "status": "locked",
+          "order": 6,
+          "is_current": false,
+          "step_type": "core"
+        },
+        {
+          "name": "Positional Encoding",
+          "description": "Adding position information to transformer inputs",
+          "status": "locked",
+          "order": 7,
+          "is_current": false,
+          "step_type": "core"
+        },
+        {
+          "name": "Transformers",
+          "description": "Attention-based architecture powering modern AI models",
+          "status": "locked",
+          "order": 8,
+          "is_current": false,
+          "step_type": "core"
+        }
+      ],
+      "roadmap_generated_at": "2026-05-31T00:38:57.229057"
     }
   },
   "user1": {
@@ -68,6 +303,672 @@
       "sessions": 1,
       "last_accessed": "2026-05-30T22:29:29.358559",
       "completed": true
+    }
+  },
+  "user4": {
+    "_notes_metadata": {
+      "Linear Algebra": {
+        "filepath": "C:\\simran\\3rd year\\6th sem\\gen-ai\\hackathon\\Team-A2\\synapse_ai_tutor\\data\\notes\\user4\\linear_algebra.md",
+        "created_at": "2026-05-31T00:41:36.364493",
+        "updated_at": "2026-05-31T00:41:36.364510"
+      },
+      "Calculus (Derivatives & Chain Rule)": {
+        "filepath": "C:\\simran\\3rd year\\6th sem\\gen-ai\\hackathon\\Team-A2\\synapse_ai_tutor\\data\\notes\\user4\\calculus_derivatives_and_chain_rule.md",
+        "created_at": "2026-05-31T00:45:30.354535",
+        "updated_at": "2026-05-31T00:45:30.354552"
+      },
+      "Probability & Statistics": {
+        "filepath": "C:\\simran\\3rd year\\6th sem\\gen-ai\\hackathon\\Team-A2\\synapse_ai_tutor\\data\\notes\\user4\\probability_and_statistics.md",
+        "created_at": "2026-05-31T00:45:34.352792",
+        "updated_at": "2026-05-31T00:45:34.352825"
+      },
+      "Python Programming": {
+        "filepath": "C:\\simran\\3rd year\\6th sem\\gen-ai\\hackathon\\Team-A2\\synapse_ai_tutor\\data\\notes\\user4\\python_programming.md",
+        "created_at": "2026-05-31T00:45:36.865977",
+        "updated_at": "2026-05-31T00:45:36.865999"
+      },
+      "Optimization (Gradient Descent)": {
+        "filepath": "C:\\simran\\3rd year\\6th sem\\gen-ai\\hackathon\\Team-A2\\synapse_ai_tutor\\data\\notes\\user4\\optimization_gradient_descent.md",
+        "created_at": "2026-05-31T00:45:49.025145",
+        "updated_at": "2026-05-31T00:45:49.025164"
+      },
+      "Perceptrons": {
+        "filepath": "C:\\simran\\3rd year\\6th sem\\gen-ai\\hackathon\\Team-A2\\synapse_ai_tutor\\data\\notes\\user4\\perceptrons.md",
+        "created_at": "2026-05-31T00:46:02.458022",
+        "updated_at": "2026-05-31T00:46:02.458047"
+      },
+      "Activation Functions": {
+        "filepath": "C:\\simran\\3rd year\\6th sem\\gen-ai\\hackathon\\Team-A2\\synapse_ai_tutor\\data\\notes\\user4\\activation_functions.md",
+        "created_at": "2026-05-31T00:46:32.595947",
+        "updated_at": "2026-05-31T00:46:32.595964"
+      },
+      "Backpropagation": {
+        "filepath": "C:\\simran\\3rd year\\6th sem\\gen-ai\\hackathon\\Team-A2\\synapse_ai_tutor\\data\\notes\\user4\\backpropagation.md",
+        "created_at": "2026-05-31T00:46:35.175889",
+        "updated_at": "2026-05-31T00:46:35.175910"
+      },
+      "Neural Networks": {
+        "filepath": "C:\\simran\\3rd year\\6th sem\\gen-ai\\hackathon\\Team-A2\\synapse_ai_tutor\\data\\notes\\user4\\neural_networks.md",
+        "created_at": "2026-05-31T00:46:43.858905",
+        "updated_at": "2026-05-31T00:46:43.858921"
+      },
+      "Image Processing Basics": {
+        "filepath": "C:\\simran\\3rd year\\6th sem\\gen-ai\\hackathon\\Team-A2\\synapse_ai_tutor\\data\\notes\\user4\\image_processing_basics.md",
+        "created_at": "2026-05-31T00:53:03.886566",
+        "updated_at": "2026-05-31T00:53:03.886583"
+      },
+      "Convolution Operations": {
+        "filepath": "C:\\simran\\3rd year\\6th sem\\gen-ai\\hackathon\\Team-A2\\synapse_ai_tutor\\data\\notes\\user4\\convolution_operations.md",
+        "created_at": "2026-05-31T00:53:13.117594",
+        "updated_at": "2026-05-31T00:53:13.117613"
+      },
+      "Pooling Layers": {
+        "filepath": "C:\\simran\\3rd year\\6th sem\\gen-ai\\hackathon\\Team-A2\\synapse_ai_tutor\\data\\notes\\user4\\pooling_layers.md",
+        "created_at": "2026-05-31T00:53:47.158700",
+        "updated_at": "2026-05-31T00:53:47.158713"
+      },
+      "Feature Maps": {
+        "filepath": "C:\\simran\\3rd year\\6th sem\\gen-ai\\hackathon\\Team-A2\\synapse_ai_tutor\\data\\notes\\user4\\feature_maps.md",
+        "created_at": "2026-05-31T00:53:50.070673",
+        "updated_at": "2026-05-31T00:53:50.070690"
+      },
+      "Stride and Padding": {
+        "filepath": "C:\\simran\\3rd year\\6th sem\\gen-ai\\hackathon\\Team-A2\\synapse_ai_tutor\\data\\notes\\user4\\stride_and_padding.md",
+        "created_at": "2026-05-31T00:53:55.634553",
+        "updated_at": "2026-05-31T00:53:55.634574"
+      },
+      "CNNs": {
+        "filepath": "C:\\simran\\3rd year\\6th sem\\gen-ai\\hackathon\\Team-A2\\synapse_ai_tutor\\data\\notes\\user4\\cnns.md",
+        "created_at": "2026-05-31T00:54:25.218261",
+        "updated_at": "2026-05-31T00:54:25.218276"
+      },
+      "Sequence Modeling": {
+        "filepath": "C:\\simran\\3rd year\\6th sem\\gen-ai\\hackathon\\Team-A2\\synapse_ai_tutor\\data\\notes\\user4\\sequence_modeling.md",
+        "created_at": "2026-05-31T01:29:04.483648",
+        "updated_at": "2026-05-31T01:29:04.483667"
+      },
+      "Backpropagation Through Time": {
+        "filepath": "C:\\simran\\3rd year\\6th sem\\gen-ai\\hackathon\\Team-A2\\synapse_ai_tutor\\data\\notes\\user4\\backpropagation_through_time.md",
+        "created_at": "2026-05-31T01:29:13.690424",
+        "updated_at": "2026-05-31T01:29:13.690446"
+      },
+      "Optimization": {
+        "filepath": "C:\\simran\\3rd year\\6th sem\\gen-ai\\hackathon\\Team-A2\\synapse_ai_tutor\\data\\notes\\user4\\optimization.md",
+        "created_at": "2026-05-31T01:29:46.283412",
+        "updated_at": "2026-05-31T01:29:46.283428"
+      },
+      "Hidden States": {
+        "filepath": "C:\\simran\\3rd year\\6th sem\\gen-ai\\hackathon\\Team-A2\\synapse_ai_tutor\\data\\notes\\user4\\hidden_states.md",
+        "created_at": "2026-05-31T01:29:59.792871",
+        "updated_at": "2026-05-31T01:29:59.792887"
+      },
+      "LSTM Gates": {
+        "filepath": "C:\\simran\\3rd year\\6th sem\\gen-ai\\hackathon\\Team-A2\\synapse_ai_tutor\\data\\notes\\user4\\lstm_gates.md",
+        "created_at": "2026-05-31T01:30:13.397641",
+        "updated_at": "2026-05-31T01:30:13.397664"
+      },
+      "GRU Architecture": {
+        "filepath": "C:\\simran\\3rd year\\6th sem\\gen-ai\\hackathon\\Team-A2\\synapse_ai_tutor\\data\\notes\\user4\\gru_architecture.md",
+        "created_at": "2026-05-31T01:30:26.788774",
+        "updated_at": "2026-05-31T01:30:26.788791"
+      },
+      "RNNs": {
+        "filepath": "C:\\simran\\3rd year\\6th sem\\gen-ai\\hackathon\\Team-A2\\synapse_ai_tutor\\data\\notes\\user4\\rnns.md",
+        "created_at": "2026-05-31T01:30:41.153828",
+        "updated_at": "2026-05-31T01:30:41.153844"
+      },
+      "Vectors & Embeddings": {
+        "filepath": "C:\\simran\\3rd year\\6th sem\\gen-ai\\hackathon\\Team-A2\\synapse_ai_tutor\\data\\notes\\user4\\vectors_and_embeddings.md",
+        "created_at": "2026-05-31T01:37:48.282253",
+        "updated_at": "2026-05-31T01:37:48.282270"
+      },
+      "Attention Mechanisms": {
+        "filepath": "C:\\simran\\3rd year\\6th sem\\gen-ai\\hackathon\\Team-A2\\synapse_ai_tutor\\data\\notes\\user4\\attention_mechanisms.md",
+        "created_at": "2026-05-31T01:37:58.709999",
+        "updated_at": "2026-05-31T01:37:58.710016"
+      },
+      "Matrix Multiplication": {
+        "filepath": "C:\\simran\\3rd year\\6th sem\\gen-ai\\hackathon\\Team-A2\\synapse_ai_tutor\\data\\notes\\user4\\matrix_multiplication.md",
+        "created_at": "2026-05-31T01:38:01.528513",
+        "updated_at": "2026-05-31T01:38:01.528529"
+      },
+      "Self-Attention": {
+        "filepath": "C:\\simran\\3rd year\\6th sem\\gen-ai\\hackathon\\Team-A2\\synapse_ai_tutor\\data\\notes\\user4\\self-attention.md",
+        "created_at": "2026-05-31T01:38:24.522418",
+        "updated_at": "2026-05-31T01:38:24.522440"
+      },
+      "Multi-Head Attention": {
+        "filepath": "C:\\simran\\3rd year\\6th sem\\gen-ai\\hackathon\\Team-A2\\synapse_ai_tutor\\data\\notes\\user4\\multi-head_attention.md",
+        "created_at": "2026-05-31T01:38:27.444438",
+        "updated_at": "2026-05-31T01:38:27.444455"
+      },
+      "Positional Encoding": {
+        "filepath": "C:\\simran\\3rd year\\6th sem\\gen-ai\\hackathon\\Team-A2\\synapse_ai_tutor\\data\\notes\\user4\\positional_encoding.md",
+        "created_at": "2026-05-31T01:38:39.934969",
+        "updated_at": "2026-05-31T01:38:39.934984"
+      },
+      "Transformers": {
+        "filepath": "C:\\simran\\3rd year\\6th sem\\gen-ai\\hackathon\\Team-A2\\synapse_ai_tutor\\data\\notes\\user4\\transformers.md",
+        "created_at": "2026-05-31T01:39:09.203114",
+        "updated_at": "2026-05-31T01:39:09.203130"
+      },
+      "Pre-training": {
+        "filepath": "C:\\simran\\3rd year\\6th sem\\gen-ai\\hackathon\\Team-A2\\synapse_ai_tutor\\data\\notes\\user4\\pre-training.md",
+        "created_at": "2026-05-31T01:53:53.648595",
+        "updated_at": "2026-05-31T01:53:53.648608"
+      },
+      "Context Windows": {
+        "filepath": "C:\\simran\\3rd year\\6th sem\\gen-ai\\hackathon\\Team-A2\\synapse_ai_tutor\\data\\notes\\user4\\context_windows.md",
+        "created_at": "2026-05-31T01:54:03.846436",
+        "updated_at": "2026-05-31T01:54:03.846454"
+      },
+      "LLMs": {
+        "filepath": "C:\\simran\\3rd year\\6th sem\\gen-ai\\hackathon\\Team-A2\\synapse_ai_tutor\\data\\notes\\user4\\llms.md",
+        "created_at": "2026-05-31T01:54:07.534091",
+        "updated_at": "2026-05-31T01:54:07.534105"
+      },
+      "Fine-Tuning and RAG": {
+        "filepath": "C:\\simran\\3rd year\\6th sem\\gen-ai\\hackathon\\Team-A2\\synapse_ai_tutor\\data\\notes\\user4\\fine-tuning_and_rag.md",
+        "created_at": "2026-05-31T01:54:13.922555",
+        "updated_at": "2026-05-31T01:54:13.922575"
+      }
+    },
+    "Neural Networks": {
+      "mastery": 20,
+      "level": "Beginner",
+      "score": 6,
+      "max_score": 30,
+      "knowledge_gaps": [
+        "Perceptrons",
+        "Activation Functions",
+        "Backpropagation",
+        "Linear Algebra",
+        "Calculus (Derivatives & Chain Rule)",
+        "Probability & Statistics"
+      ],
+      "assessment_history": [
+        {
+          "date": "2026-05-31T00:45:05.407959",
+          "score": 6,
+          "max_score": 30,
+          "level": "Beginner",
+          "mastery": 20
+        }
+      ],
+      "practice_history": [],
+      "sessions": 1,
+      "last_accessed": "2026-05-31T00:45:05.407977",
+      "completed": false,
+      "roadmap": [
+        {
+          "name": "Linear Algebra",
+          "description": "Vectors, matrices, and operations fundamental to neural networks",
+          "status": "current",
+          "order": 0,
+          "is_current": true,
+          "step_type": "prerequisite"
+        },
+        {
+          "name": "Calculus (Derivatives & Chain Rule)",
+          "description": "Derivatives and chain rule used in backpropagation",
+          "status": "locked",
+          "order": 1,
+          "is_current": false,
+          "step_type": "prerequisite"
+        },
+        {
+          "name": "Probability & Statistics",
+          "description": "Probability distributions, Bayes theorem, and statistical inference",
+          "status": "locked",
+          "order": 2,
+          "is_current": false,
+          "step_type": "prerequisite"
+        },
+        {
+          "name": "Python Programming",
+          "description": "Core Python skills for implementing ML models",
+          "status": "locked",
+          "order": 3,
+          "is_current": false,
+          "step_type": "prerequisite"
+        },
+        {
+          "name": "Optimization (Gradient Descent)",
+          "description": "Gradient-based optimization methods for training models",
+          "status": "locked",
+          "order": 4,
+          "is_current": false,
+          "step_type": "prerequisite"
+        },
+        {
+          "name": "Perceptrons",
+          "description": "The simplest neural network unit — a linear classifier",
+          "status": "locked",
+          "order": 5,
+          "is_current": false,
+          "step_type": "core"
+        },
+        {
+          "name": "Activation Functions",
+          "description": "Non-linear functions that enable complex pattern learning",
+          "status": "locked",
+          "order": 6,
+          "is_current": false,
+          "step_type": "core"
+        },
+        {
+          "name": "Backpropagation",
+          "description": "Algorithm for computing gradients through the network",
+          "status": "locked",
+          "order": 7,
+          "is_current": false,
+          "step_type": "core"
+        },
+        {
+          "name": "Neural Networks",
+          "description": "Core building blocks of deep learning — layers, weights, and training",
+          "status": "locked",
+          "order": 8,
+          "is_current": false,
+          "step_type": "core"
+        }
+      ],
+      "roadmap_generated_at": "2026-05-31T00:45:10.971072"
+    },
+    "CNNs": {
+      "mastery": 60,
+      "level": "Intermediate",
+      "score": 18,
+      "max_score": 30,
+      "knowledge_gaps": [
+        "Neural Networks",
+        "Linear Algebra",
+        "Image Processing Basics"
+      ],
+      "assessment_history": [
+        {
+          "date": "2026-05-31T00:52:55.002168",
+          "score": 18,
+          "max_score": 30,
+          "level": "Intermediate",
+          "mastery": 60
+        }
+      ],
+      "practice_history": [],
+      "sessions": 1,
+      "last_accessed": "2026-05-31T00:52:55.002194",
+      "completed": false,
+      "roadmap": [
+        {
+          "name": "Neural Networks",
+          "description": "Core building blocks of deep learning — layers, weights, and training",
+          "status": "current",
+          "order": 0,
+          "is_current": true,
+          "step_type": "prerequisite"
+        },
+        {
+          "name": "Linear Algebra",
+          "description": "Vectors, matrices, and operations fundamental to neural networks",
+          "status": "locked",
+          "order": 1,
+          "is_current": false,
+          "step_type": "prerequisite"
+        },
+        {
+          "name": "Image Processing Basics",
+          "description": "Fundamental image manipulation and representation",
+          "status": "locked",
+          "order": 2,
+          "is_current": false,
+          "step_type": "prerequisite"
+        },
+        {
+          "name": "Calculus (Derivatives & Chain Rule)",
+          "description": "Derivatives and chain rule used in backpropagation",
+          "status": "locked",
+          "order": 3,
+          "is_current": false,
+          "step_type": "gap"
+        },
+        {
+          "name": "Convolution Operations",
+          "description": "Sliding window operations for feature detection",
+          "status": "locked",
+          "order": 4,
+          "is_current": false,
+          "step_type": "core"
+        },
+        {
+          "name": "Pooling Layers",
+          "description": "Downsampling operations to reduce spatial dimensions",
+          "status": "locked",
+          "order": 5,
+          "is_current": false,
+          "step_type": "core"
+        },
+        {
+          "name": "Feature Maps",
+          "description": "Output of convolutional filters representing detected features",
+          "status": "locked",
+          "order": 6,
+          "is_current": false,
+          "step_type": "core"
+        },
+        {
+          "name": "Stride and Padding",
+          "description": "Parameters controlling convolution output size",
+          "status": "locked",
+          "order": 7,
+          "is_current": false,
+          "step_type": "core"
+        },
+        {
+          "name": "CNNs",
+          "description": "Convolutional Neural Networks for image and spatial data processing",
+          "status": "locked",
+          "order": 8,
+          "is_current": false,
+          "step_type": "core"
+        }
+      ],
+      "roadmap_generated_at": "2026-05-31T00:53:01.109955"
+    },
+    "RNNs": {
+      "mastery": 23,
+      "level": "Beginner",
+      "score": 7,
+      "max_score": 30,
+      "knowledge_gaps": [
+        "Hidden States",
+        "LSTM Gates",
+        "GRU Architecture",
+        "Neural Networks",
+        "Sequence Modeling",
+        "Backpropagation Through Time",
+        "Linear Algebra",
+        "Calculus (Derivatives & Chain Rule)"
+      ],
+      "assessment_history": [
+        {
+          "date": "2026-05-31T01:28:36.844260",
+          "score": 7,
+          "max_score": 30,
+          "level": "Beginner",
+          "mastery": 23
+        }
+      ],
+      "practice_history": [],
+      "sessions": 1,
+      "last_accessed": "2026-05-31T01:36:07.176654",
+      "completed": false,
+      "roadmap": [
+        {
+          "name": "Neural Networks",
+          "description": "Core building blocks of deep learning — layers, weights, and training",
+          "status": "current",
+          "order": 0,
+          "is_current": true,
+          "step_type": "prerequisite"
+        },
+        {
+          "name": "Sequence Modeling",
+          "description": "Techniques for processing sequential and temporal data",
+          "status": "locked",
+          "order": 1,
+          "is_current": false,
+          "step_type": "prerequisite"
+        },
+        {
+          "name": "Backpropagation Through Time",
+          "description": "Training algorithm for recurrent neural networks",
+          "status": "locked",
+          "order": 2,
+          "is_current": false,
+          "step_type": "prerequisite"
+        },
+        {
+          "name": "Linear Algebra",
+          "description": "Vectors, matrices, and operations fundamental to neural networks",
+          "status": "locked",
+          "order": 3,
+          "is_current": false,
+          "step_type": "prerequisite"
+        },
+        {
+          "name": "Optimization",
+          "description": "Methods for finding optimal model parameters",
+          "status": "locked",
+          "order": 4,
+          "is_current": false,
+          "step_type": "prerequisite"
+        },
+        {
+          "name": "Calculus (Derivatives & Chain Rule)",
+          "description": "Derivatives and chain rule used in backpropagation",
+          "status": "locked",
+          "order": 5,
+          "is_current": false,
+          "step_type": "gap"
+        },
+        {
+          "name": "Hidden States",
+          "description": "Internal memory representations in recurrent networks",
+          "status": "locked",
+          "order": 6,
+          "is_current": false,
+          "step_type": "core"
+        },
+        {
+          "name": "LSTM Gates",
+          "description": "Gating mechanisms in Long Short-Term Memory networks",
+          "status": "locked",
+          "order": 7,
+          "is_current": false,
+          "step_type": "core"
+        },
+        {
+          "name": "GRU Architecture",
+          "description": "Simplified gated recurrent unit design",
+          "status": "locked",
+          "order": 8,
+          "is_current": false,
+          "step_type": "core"
+        },
+        {
+          "name": "RNNs",
+          "description": "Recurrent Neural Networks for sequential and temporal data",
+          "status": "locked",
+          "order": 9,
+          "is_current": false,
+          "step_type": "core"
+        }
+      ],
+      "roadmap_generated_at": "2026-05-31T01:28:44.481359"
+    },
+    "Transformers": {
+      "mastery": 16,
+      "level": "Beginner",
+      "score": 5,
+      "max_score": 30,
+      "knowledge_gaps": [
+        "Self-Attention",
+        "Multi-Head Attention",
+        "Positional Encoding",
+        "Vectors & Embeddings",
+        "Sequence Modeling",
+        "Attention Mechanisms"
+      ],
+      "assessment_history": [
+        {
+          "date": "2026-05-31T01:37:39.863858",
+          "score": 5,
+          "max_score": 30,
+          "level": "Beginner",
+          "mastery": 16
+        }
+      ],
+      "practice_history": [],
+      "sessions": 1,
+      "last_accessed": "2026-05-31T01:37:39.863882",
+      "completed": false,
+      "roadmap": [
+        {
+          "name": "Vectors & Embeddings",
+          "description": "Numerical representations of data in high-dimensional space",
+          "status": "current",
+          "order": 0,
+          "is_current": true,
+          "step_type": "prerequisite"
+        },
+        {
+          "name": "Sequence Modeling",
+          "description": "Techniques for processing sequential and temporal data",
+          "status": "locked",
+          "order": 1,
+          "is_current": false,
+          "step_type": "prerequisite"
+        },
+        {
+          "name": "Attention Mechanisms",
+          "description": "Selective focus mechanisms in neural networks",
+          "status": "locked",
+          "order": 2,
+          "is_current": false,
+          "step_type": "prerequisite"
+        },
+        {
+          "name": "Neural Networks",
+          "description": "Core building blocks of deep learning — layers, weights, and training",
+          "status": "locked",
+          "order": 3,
+          "is_current": false,
+          "step_type": "prerequisite"
+        },
+        {
+          "name": "Matrix Multiplication",
+          "description": "Core linear algebra operation used in transformers",
+          "status": "locked",
+          "order": 4,
+          "is_current": false,
+          "step_type": "prerequisite"
+        },
+        {
+          "name": "Self-Attention",
+          "description": "Mechanism for relating different positions in a sequence",
+          "status": "locked",
+          "order": 5,
+          "is_current": false,
+          "step_type": "core"
+        },
+        {
+          "name": "Multi-Head Attention",
+          "description": "Parallel attention mechanisms for richer representations",
+          "status": "locked",
+          "order": 6,
+          "is_current": false,
+          "step_type": "core"
+        },
+        {
+          "name": "Positional Encoding",
+          "description": "Adding position information to transformer inputs",
+          "status": "locked",
+          "order": 7,
+          "is_current": false,
+          "step_type": "core"
+        },
+        {
+          "name": "Transformers",
+          "description": "Attention-based architecture powering modern AI models",
+          "status": "locked",
+          "order": 8,
+          "is_current": false,
+          "step_type": "core"
+        }
+      ],
+      "roadmap_generated_at": "2026-05-31T01:37:45.135016"
+    },
+    "LLMs": {
+      "mastery": 96,
+      "level": "Advanced",
+      "score": 29,
+      "max_score": 30,
+      "knowledge_gaps": [
+        "Vectors & Embeddings",
+        "Sequence Modeling"
+      ],
+      "assessment_history": [
+        {
+          "date": "2026-05-31T01:51:00.587594",
+          "score": 29,
+          "max_score": 30,
+          "level": "Advanced",
+          "mastery": 96
+        }
+      ],
+      "practice_history": [],
+      "sessions": 1,
+      "last_accessed": "2026-05-31T02:13:30.614780",
+      "completed": true,
+      "roadmap": [
+        {
+          "name": "Vectors & Embeddings",
+          "description": "Numerical representations of data in high-dimensional space",
+          "status": "current",
+          "order": 0,
+          "is_current": true,
+          "step_type": "gap"
+        },
+        {
+          "name": "Sequence Modeling",
+          "description": "Techniques for processing sequential and temporal data",
+          "status": "locked",
+          "order": 1,
+          "is_current": false,
+          "step_type": "gap"
+        },
+        {
+          "name": "Pre-training",
+          "description": "Training on large datasets before task-specific fine-tuning",
+          "status": "locked",
+          "order": 2,
+          "is_current": false,
+          "step_type": "core"
+        },
+        {
+          "name": "Context Windows",
+          "description": "Managing input length limits in language models",
+          "status": "locked",
+          "order": 3,
+          "is_current": false,
+          "step_type": "core"
+        },
+        {
+          "name": "LLMs",
+          "description": "Large Language Models — GPT, BERT, and language understanding",
+          "status": "locked",
+          "order": 4,
+          "is_current": false,
+          "step_type": "core"
+        },
+        {
+          "name": "Transformers",
+          "description": "Attention-based architecture powering modern AI models",
+          "status": "locked",
+          "order": 5,
+          "is_current": false,
+          "step_type": "advanced"
+        },
+        {
+          "name": "Fine-Tuning and RAG",
+          "description": "Adapting models and augmenting with external knowledge",
+          "status": "locked",
+          "order": 6,
+          "is_current": false,
+          "step_type": "advanced"
+        }
+      ],
+      "roadmap_generated_at": "2026-05-31T02:13:23.985116"
     }
   }
 }

@@ -395,7 +395,7 @@ def _render_results(topic, username):
     q_idx = st.session_state.get("topic_queue_idx", 0)
     has_next = (q_idx + 1) < len(queue)
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
     with col1:
         if st.button("Start Tutoring", use_container_width=True, type="primary"):
             if topic not in st.session_state.chat_histories:
@@ -404,6 +404,11 @@ def _render_results(topic, username):
             st.rerun()
 
     with col2:
+        if st.button("View Roadmap", use_container_width=True):
+            st.session_state.current_page = "roadmap"
+            st.rerun()
+
+    with col3:
         if has_next:
             next_topic = queue[q_idx + 1]
             if st.button(f"Next: Assess {next_topic[:15]}", use_container_width=True):
@@ -424,7 +429,7 @@ def _render_results(topic, username):
                 st.session_state.current_question_idx = 0
                 st.rerun()
 
-    with col3:
+    with col4:
         if st.button("Choose Topics", use_container_width=True):
             st.session_state.current_page = "topic_selection"
             st.rerun()

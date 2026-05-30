@@ -14,6 +14,10 @@ from pages.topic_selection import render_topic_selection
 from pages.assessment import render_assessment
 from pages.tutor import render_tutor
 from pages.dashboard import render_dashboard
+from pages.roadmap import render_roadmap
+from pages.note_viewer import render_note_viewer
+from pages.knowledge_vault import render_knowledge_vault
+from pages.knowledge_graph_page import render_knowledge_graph
 
 
 def configure_page():
@@ -161,6 +165,14 @@ def init_session_state():
         # Topic queue for multi-topic flow
         "topic_queue": [],
         "topic_queue_idx": 0,
+        # Roadmap & Notes
+        "generated_notes": {},           # {topic: note_content}
+        "current_roadmap": None,         # Current roadmap data
+        "roadmap_topic": None,           # Topic the roadmap was generated for
+        "_viewing_note": None,           # Currently viewing note topic
+        "_vault_viewing": None,          # Vault note being viewed
+        "_note_viewer_topic": None,      # Note viewer page topic
+        "_graph_view": "full",           # Knowledge graph view mode
     }
     for key, value in defaults.items():
         if key not in st.session_state:
@@ -191,6 +203,9 @@ def render_sidebar():
                 "topic_selection": "Topics",
                 "assessment": "Assessment",
                 "tutor": "Tutor",
+                "roadmap": "Roadmap",
+                "knowledge_vault": "Vault",
+                "knowledge_graph": "Graph",
                 "dashboard": "Dashboard",
             }
             for page_key, label in pages.items():
@@ -286,6 +301,14 @@ def main():
             render_assessment()
         elif page == "tutor":
             render_tutor()
+        elif page == "roadmap":
+            render_roadmap()
+        elif page == "note_viewer":
+            render_note_viewer()
+        elif page == "knowledge_vault":
+            render_knowledge_vault()
+        elif page == "knowledge_graph":
+            render_knowledge_graph()
         elif page == "dashboard":
             render_dashboard()
         else:

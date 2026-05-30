@@ -1,42 +1,58 @@
 """
 LLM Client for Synapse AI Tutor.
-Connects to GPT-OSS 20B running on MacBook M4 via Ollama.
+Uses Groq API for fast LLM inference.
 Enhanced with full adaptive prompting and graceful fallback mode.
 """
 
-import requests
+import os
+from dotenv import load_dotenv
 
-# Ollama endpoint on MacBook M4
-OLLAMA_BASE_URL = "http://192.168.29.145:11434"
-OLLAMA_CHAT_URL = f"{OLLAMA_BASE_URL}/api/chat"
+# Load environment variables from .env file
+load_dotenv(os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env"))
 
-# Model name
-DEFAULT_MODEL = "gpt-oss:20b"
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+DEFAULT_MODEL = "llama-3.1-8b-instant"
 
-# Connection timeout (seconds)
-CONNECT_TIMEOUT = 5
+# Timeout (seconds)
 GENERATE_TIMEOUT = 120
 
 
-def check_connection() -> bool:
-    """Check if the Ollama server is reachable."""
+def _get_groq_client():
+    """Get a Groq client instance."""
     try:
-        response = requests.get(f"{OLLAMA_BASE_URL}/api/tags", timeout=CONNECT_TIMEOUT)
-        return response.status_code == 200
+        from groq import Groq
+        if not GROQ_API_KEY or GROQ_API_KEY == "your_groq_api_key_here":
+            return None
+        return Groq(api_key=GROQ_API_KEY)
+    except ImportError:
+        return None
+
+
+def check_connection() -> bool:
+    """Check if the Groq API is reachable and configured."""
+    client = _get_groq_client()
+    if client is None:
+        return False
+    try:
+        # Quick test call
+        client.chat.completions.create(
+            model=DEFAULT_MODEL,
+            messages=[{"role": "user", "content": "hi"}],
+            max_tokens=5,
+        )
+        return True
     except Exception:
         return False
 
 
 def get_available_models() -> list:
-    """Get list of available models on the Ollama server."""
-    try:
-        response = requests.get(f"{OLLAMA_BASE_URL}/api/tags", timeout=CONNECT_TIMEOUT)
-        if response.status_code == 200:
-            data = response.json()
-            return [m["name"] for m in data.get("models", [])]
-    except Exception:
-        pass
-    return []
+    """Get list of available Groq models."""
+    return [
+        "llama-3.1-8b-instant",
+        "llama-3.3-70b-versatile",
+        "mixtral-8x7b-32768",
+        "gemma2-9b-it",
+    ]
 
 
 def generate_response(
@@ -47,11 +63,15 @@ def generate_response(
     max_tokens: int = 2048
 ) -> str:
     """
-    Generate a response from the LLM.
+    Generate a response from the LLM via Groq API.
     Returns generated text or an error/fallback message string.
     """
     if model is None:
         model = DEFAULT_MODEL
+
+    client = _get_groq_client()
+    if client is None:
+        return "__LLM_OFFLINE__"
 
     messages = []
     if system_prompt:
@@ -59,34 +79,23 @@ def generate_response(
     messages.append({"role": "user", "content": prompt})
 
     try:
-        payload = {
-            "model": model,
-            "messages": messages,
-            "stream": False,
-            "options": {
-                "temperature": temperature,
-                "num_predict": max_tokens
-            }
-        }
-
-        response = requests.post(
-            OLLAMA_CHAT_URL,
-            json=payload,
-            timeout=GENERATE_TIMEOUT
+        response = client.chat.completions.create(
+            model=model,
+            messages=messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
         )
+        content = response.choices[0].message.content
+        return content if content else "No response generated."
 
-        if response.status_code == 200:
-            data = response.json()
-            return data.get("message", {}).get("content", "No response generated.")
-        else:
-            return f"__LLM_ERROR__: Server returned status {response.status_code}"
-
-    except requests.exceptions.ConnectionError:
-        return "__LLM_OFFLINE__"
-    except requests.exceptions.Timeout:
-        return "__LLM_TIMEOUT__"
     except Exception as e:
-        return f"__LLM_ERROR__: {str(e)}"
+        error_str = str(e).lower()
+        if "auth" in error_str or "api_key" in error_str:
+            return "__LLM_OFFLINE__"
+        elif "timeout" in error_str:
+            return "__LLM_TIMEOUT__"
+        else:
+            return f"__LLM_ERROR__: {str(e)}"
 
 
 def generate_tutoring_response(
