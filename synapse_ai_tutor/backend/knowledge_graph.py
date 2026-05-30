@@ -520,7 +520,42 @@ def generate_cytoscape_html(
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.28.1/cytoscape.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/cytoscape-cose-bilkent@4.1.0/cytoscape-cose-bilkent.js"></script>
 <script>
+  // Register the plugin if it loaded
+  if (typeof cytoscapeCoseBilkent !== 'undefined') {{
+    cytoscape.use(cytoscapeCoseBilkent);
+  }}
+
   var elements = {elements_js};
+
+  // Pick layout — use cose-bilkent if available, else built-in cose
+  var layoutConfig;
+  if (typeof cytoscapeCoseBilkent !== 'undefined') {{
+    layoutConfig = {{
+      name: 'cose-bilkent',
+      quality: 'proof',
+      nodeDimensionsIncludeLabels: true,
+      idealEdgeLength: 150,
+      nodeRepulsion: 6000,
+      edgeElasticity: 0.45,
+      gravity: 0.35,
+      numIter: 2000,
+      animate: 'end',
+      animationDuration: 700,
+      fit: true, padding: 40, randomize: true,
+    }};
+  }} else {{
+    layoutConfig = {{
+      name: 'cose',
+      nodeDimensionsIncludeLabels: true,
+      idealEdgeLength: function(){{ return 120; }},
+      nodeRepulsion: function(){{ return 5000; }},
+      gravity: 0.4,
+      numIter: 1000,
+      animate: true,
+      animationDuration: 500,
+      fit: true, padding: 40, randomize: true,
+    }};
+  }}
 
   var cy = cytoscape({{
     container: document.getElementById('cy'),
@@ -650,19 +685,7 @@ def generate_cytoscape_html(
         style: {{ 'opacity': 0.06 }}
       }},
     ],
-    layout: {{
-      name: 'cose-bilkent',
-      quality: 'proof',
-      nodeDimensionsIncludeLabels: true,
-      idealEdgeLength: 150,
-      nodeRepulsion: 6000,
-      edgeElasticity: 0.45,
-      gravity: 0.35,
-      numIter: 2000,
-      animate: 'end',
-      animationDuration: 700,
-      fit: true, padding: 40, randomize: true,
-    }},
+    layout: layoutConfig,
     minZoom: 0.3, maxZoom: 3, wheelSensitivity: 0.3,
   }});
 
