@@ -8,7 +8,7 @@ interactive algorithm visualisation engine.
 
 ---
 
-## Table of Contents
+## Table of Contents  
 
 - [Project Overview](#project-overview)
 - [Architecture](#architecture)
