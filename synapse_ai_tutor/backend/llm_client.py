@@ -6,11 +6,7 @@ Enhanced with full adaptive prompting and graceful fallback mode.
 
 import requests
 
-# Ollama endpoint on MacBook M4
-OLLAMA_BASE_URL = "http://192.168.29.145:11434"
-OLLAMA_CHAT_URL = f"{OLLAMA_BASE_URL}/api/chat"
-
-# Model name
+# Ollama configuration
 DEFAULT_MODEL = "gpt-oss:20b"
 
 # Connection timeout (seconds)
@@ -18,10 +14,23 @@ CONNECT_TIMEOUT = 5
 GENERATE_TIMEOUT = 120
 
 
+def get_ollama_base_url() -> str:
+    """Get the Ollama base URL dynamically."""
+    try:
+        import streamlit as st
+        if "ollama_base_url" in st.session_state and st.session_state.ollama_base_url:
+            return st.session_state.ollama_base_url
+    except Exception:
+        pass
+    import os
+    return os.getenv("OLLAMA_BASE_URL", "http://192.168.29.145:11434")
+
+
 def check_connection() -> bool:
     """Check if the Ollama server is reachable."""
     try:
-        response = requests.get(f"{OLLAMA_BASE_URL}/api/tags", timeout=CONNECT_TIMEOUT)
+        base_url = get_ollama_base_url()
+        response = requests.get(f"{base_url}/api/tags", timeout=CONNECT_TIMEOUT)
         return response.status_code == 200
     except Exception:
         return False
@@ -30,7 +39,8 @@ def check_connection() -> bool:
 def get_available_models() -> list:
     """Get list of available models on the Ollama server."""
     try:
-        response = requests.get(f"{OLLAMA_BASE_URL}/api/tags", timeout=CONNECT_TIMEOUT)
+        base_url = get_ollama_base_url()
+        response = requests.get(f"{base_url}/api/tags", timeout=CONNECT_TIMEOUT)
         if response.status_code == 200:
             data = response.json()
             return [m["name"] for m in data.get("models", [])]
@@ -69,8 +79,9 @@ def generate_response(
             }
         }
 
+        base_url = get_ollama_base_url()
         response = requests.post(
-            OLLAMA_CHAT_URL,
+            f"{base_url}/api/chat",
             json=payload,
             timeout=GENERATE_TIMEOUT
         )

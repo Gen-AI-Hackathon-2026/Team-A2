@@ -66,8 +66,303 @@
       ],
       "practice_history": [],
       "sessions": 1,
-      "last_accessed": "2026-05-31T01:09:11.402560",
+      "last_accessed": "2026-05-31T05:28:42.948306",
       "completed": true
+    },
+    "Transformers": {
+      "mastery": 100,
+      "level": "Advanced",
+      "score": 30,
+      "max_score": 30,
+      "knowledge_gaps": [
+        "Vectors & Embeddings",
+        "Sequence Modeling",
+        "Attention Mechanisms",
+        "Neural Networks",
+        "Matrix Multiplication"
+      ],
+      "assessment_history": [
+        {
+          "date": "2026-05-31T07:40:51.005488",
+          "score": 30,
+          "max_score": 30,
+          "level": "Advanced",
+          "mastery": 100
+        }
+      ],
+      "practice_history": [],
+      "sessions": 1,
+      "last_accessed": "2026-05-31T07:51:12.888425",
+      "completed": true,
+      "roadmap": [
+        {
+          "name": "Vectors & Embeddings",
+          "description": "Numerical representations of data in high-dimensional space",
+          "status": "current",
+          "order": 0,
+          "is_current": true,
+          "step_type": "prerequisite"
+        },
+        {
+          "name": "Sequence Modeling",
+          "description": "Techniques for processing sequential and temporal data",
+          "status": "locked",
+          "order": 1,
+          "is_current": false,
+          "step_type": "prerequisite"
+        },
+        {
+          "name": "Attention Mechanisms",
+          "description": "Selective focus mechanisms in neural networks",
+          "status": "locked",
+          "order": 2,
+          "is_current": false,
+          "step_type": "prerequisite"
+        },
+        {
+          "name": "Neural Networks",
+          "description": "Core building blocks of deep learning — layers, weights, and training",
+          "status": "locked",
+          "order": 3,
+          "is_current": false,
+          "step_type": "prerequisite"
+        },
+        {
+          "name": "Matrix Multiplication",
+          "description": "Core linear algebra operation used in transformers",
+          "status": "locked",
+          "order": 4,
+          "is_current": false,
+          "step_type": "prerequisite"
+        },
+        {
+          "name": "Self-Attention",
+          "description": "Mechanism for relating different positions in a sequence",
+          "status": "locked",
+          "order": 5,
+          "is_current": false,
+          "step_type": "core"
+        },
+        {
+          "name": "Multi-Head Attention",
+          "description": "Parallel attention mechanisms for richer representations",
+          "status": "locked",
+          "order": 6,
+          "is_current": false,
+          "step_type": "core"
+        },
+        {
+          "name": "Positional Encoding",
+          "description": "Adding position information to transformer inputs",
+          "status": "locked",
+          "order": 7,
+          "is_current": false,
+          "step_type": "core"
+        },
+        {
+          "name": "Transformers",
+          "description": "Attention-based architecture powering modern AI models",
+          "status": "locked",
+          "order": 8,
+          "is_current": false,
+          "step_type": "core"
+        }
+      ],
+      "roadmap_generated_at": "2026-05-31T05:19:29.367116"
+    },
+    "_notes_metadata": {
+      "Vectors & Embeddings": {
+        "filepath": "D:\\GEN AI\\Team-A2\\synapse_ai_tutor\\data\\notes\\user1\\vectors_and_embeddings.md",
+        "created_at": "2026-05-31T05:20:20.612822",
+        "updated_at": "2026-05-31T05:20:20.612831"
+      },
+      "Neural Networks": {
+        "filepath": "D:\\GEN AI\\Team-A2\\synapse_ai_tutor\\data\\notes\\user1\\neural_networks.md",
+        "created_at": "2026-05-31T07:43:16.092074",
+        "updated_at": "2026-05-31T07:43:16.092086"
+      },
+      "Attention Mechanisms": {
+        "filepath": "D:\\GEN AI\\Team-A2\\synapse_ai_tutor\\data\\notes\\user1\\attention_mechanisms.md",
+        "created_at": "2026-05-31T07:44:01.699285",
+        "updated_at": "2026-05-31T07:44:01.699307"
+      }
+    }
+  },
+  "user2": {
+    "LLMs": {
+      "mastery": 100,
+      "level": "Advanced",
+      "score": 30,
+      "max_score": 30,
+      "knowledge_gaps": [],
+      "assessment_history": [
+        {
+          "date": "2026-05-31T05:00:29.674884",
+          "score": 30,
+          "max_score": 30,
+          "level": "Advanced",
+          "mastery": 100
+        }
+      ],
+      "practice_history": [],
+      "sessions": 1,
+      "last_accessed": "2026-05-31T05:00:29.674892",
+      "completed": true,
+      "roadmap": [
+        {
+          "name": "Pre-training",
+          "description": "Training on large datasets before task-specific fine-tuning",
+          "status": "current",
+          "order": 0,
+          "is_current": true,
+          "step_type": "core"
+        },
+        {
+          "name": "Context Windows",
+          "description": "Managing input length limits in language models",
+          "status": "locked",
+          "order": 1,
+          "is_current": false,
+          "step_type": "core"
+        },
+        {
+          "name": "LLMs",
+          "description": "Large Language Models — GPT, BERT, and language understanding",
+          "status": "locked",
+          "order": 2,
+          "is_current": false,
+          "step_type": "core"
+        },
+        {
+          "name": "Transformers",
+          "description": "Attention-based architecture powering modern AI models",
+          "status": "locked",
+          "order": 3,
+          "is_current": false,
+          "step_type": "advanced"
+        },
+        {
+          "name": "Fine-Tuning and RAG",
+          "description": "Adapting models and augmenting with external knowledge",
+          "status": "locked",
+          "order": 4,
+          "is_current": false,
+          "step_type": "advanced"
+        }
+      ],
+      "roadmap_generated_at": "2026-05-31T05:00:51.547897"
+    },
+    "_notes_metadata": {
+      "Pre-training": {
+        "filepath": "D:\\GEN AI\\Team-A2\\synapse_ai_tutor\\data\\notes\\user2\\pre-training.md",
+        "created_at": "2026-05-31T05:01:47.373135",
+        "updated_at": "2026-05-31T05:01:47.373146"
+      },
+      "Context Windows": {
+        "filepath": "D:\\GEN AI\\Team-A2\\synapse_ai_tutor\\data\\notes\\user2\\context_windows.md",
+        "created_at": "2026-05-31T05:02:45.402163",
+        "updated_at": "2026-05-31T05:02:45.402186"
+      },
+      "LLMs": {
+        "filepath": "D:\\GEN AI\\Team-A2\\synapse_ai_tutor\\data\\notes\\user2\\llms.md",
+        "created_at": "2026-05-31T05:03:24.109180",
+        "updated_at": "2026-05-31T05:03:24.109213"
+      },
+      "Transformers": {
+        "filepath": "D:\\GEN AI\\Team-A2\\synapse_ai_tutor\\data\\notes\\user2\\transformers.md",
+        "created_at": "2026-05-31T05:05:30.276910",
+        "updated_at": "2026-05-31T05:05:30.276930"
+      },
+      "Vectors & Embeddings": {
+        "filepath": "D:\\GEN AI\\Team-A2\\synapse_ai_tutor\\data\\notes\\user2\\vectors_and_embeddings.md",
+        "created_at": "2026-05-31T05:07:28.487645",
+        "updated_at": "2026-05-31T05:07:28.487663"
+      }
+    },
+    "Transformers": {
+      "roadmap": [
+        {
+          "name": "Vectors & Embeddings",
+          "description": "Numerical representations of data in high-dimensional space",
+          "status": "current",
+          "order": 0,
+          "is_current": true,
+          "step_type": "prerequisite"
+        },
+        {
+          "name": "Sequence Modeling",
+          "description": "Techniques for processing sequential and temporal data",
+          "status": "locked",
+          "order": 1,
+          "is_current": false,
+          "step_type": "prerequisite"
+        },
+        {
+          "name": "Attention Mechanisms",
+          "description": "Selective focus mechanisms in neural networks",
+          "status": "locked",
+          "order": 2,
+          "is_current": false,
+          "step_type": "prerequisite"
+        },
+        {
+          "name": "Neural Networks",
+          "description": "Core building blocks of deep learning — layers, weights, and training",
+          "status": "locked",
+          "order": 3,
+          "is_current": false,
+          "step_type": "prerequisite"
+        },
+        {
+          "name": "Matrix Multiplication",
+          "description": "Core linear algebra operation used in transformers",
+          "status": "locked",
+          "order": 4,
+          "is_current": false,
+          "step_type": "prerequisite"
+        },
+        {
+          "name": "Self-Attention",
+          "description": "Mechanism for relating different positions in a sequence",
+          "status": "locked",
+          "order": 5,
+          "is_current": false,
+          "step_type": "core"
+        },
+        {
+          "name": "Multi-Head Attention",
+          "description": "Parallel attention mechanisms for richer representations",
+          "status": "locked",
+          "order": 6,
+          "is_current": false,
+          "step_type": "core"
+        },
+        {
+          "name": "Positional Encoding",
+          "description": "Adding position information to transformer inputs",
+          "status": "locked",
+          "order": 7,
+          "is_current": false,
+          "step_type": "core"
+        },
+        {
+          "name": "Transformers",
+          "description": "Attention-based architecture powering modern AI models",
+          "status": "locked",
+          "order": 8,
+          "is_current": false,
+          "step_type": "core"
+        }
+      ],
+      "roadmap_generated_at": "2026-05-31T05:06:49.893666",
+      "knowledge_gaps": [
+        "Vectors & Embeddings",
+        "Sequence Modeling",
+        "Attention Mechanisms",
+        "Neural Networks",
+        "Matrix Multiplication"
+      ],
+      "last_accessed": "2026-05-31T05:15:22.026470"
     }
   }
 }

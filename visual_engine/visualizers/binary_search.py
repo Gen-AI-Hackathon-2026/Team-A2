@@ -8,15 +8,15 @@ import matplotlib.patches as mpatches
 import io
 from PIL import Image
 
-DARK = "#0f1117"
-TEXT = "#e2e8f0"
-CELL_DEFAULT = "#1e3a5f"
-C_MID = "#7d5a0a"
-C_FOUND = "#14532d"
-BLUE = "#3b82f6"
-GREEN = "#22c55e"
-AMBER = "#f59e0b"
-RED = "#ef4444"
+DARK = "#F9FAFB"
+TEXT = "#111827"
+CELL_DEFAULT = "#E5E7EB"
+C_MID = "#FDE68A"
+C_FOUND = "#BBF7D0"
+BLUE = "#4F46E5"
+GREEN = "#10B981"
+AMBER = "#F59E0B"
+RED = "#EF4444"
 
 
 def _fig_to_pil(fig) -> Image.Image:
@@ -44,9 +44,9 @@ def _draw(arr, left, right, mid, target, found, step) -> Image.Image:
         elif i == mid:
             color, border, lw = C_MID, AMBER, 3
         elif 0 <= left <= i <= right:
-            color, border, lw = "#1a3a5c", BLUE, 2
+            color, border, lw = "#EEF2FF", BLUE, 2
         else:
-            color, border, lw = "#111827", "#374151", 1
+            color, border, lw = "#FFFFFF", "#D1D5DB", 1
 
         rect = mpatches.FancyBboxPatch((i - cw/2, -ch/2), cw, ch,
                                         boxstyle="round,pad=0.05",

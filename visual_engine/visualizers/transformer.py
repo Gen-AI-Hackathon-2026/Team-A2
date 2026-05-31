@@ -9,13 +9,13 @@ import numpy as np
 import io
 from PIL import Image
 
-DARK = "#0f1117"
-TEXT = "#e2e8f0"
-BLUE = "#3b82f6"
-PURPLE = "#a855f7"
-AMBER = "#f59e0b"
-GREEN = "#22c55e"
-PINK = "#ec4899"
+DARK = "#F9FAFB"
+TEXT = "#111827"
+BLUE = "#4F46E5"
+PURPLE = "#818CF8"
+AMBER = "#F59E0B"
+GREEN = "#10B981"
+PINK = "#EC4899"
 
 
 def _fig_to_pil(fig) -> Image.Image:

@@ -52,9 +52,9 @@ def render_voice_input(page_key: str) -> Optional[str]:
     """
     _HASH_KEY = f"_voice_last_hash_{page_key}"
 
-    # ΓöÇΓöÇ Render native mic widget ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    # ── Render native mic widget ──────────────────────────────────────────────
     audio_file = st.audio_input(
-        "≡ƒÄñ Click to record your question",
+        "🎙️ Click to record your question",
         key=f"_native_audio_{page_key}",
         help="Click the microphone, speak your question, then click stop.",
     )
@@ -62,7 +62,7 @@ def render_voice_input(page_key: str) -> Optional[str]:
     if audio_file is None:
         return None
 
-    # ΓöÇΓöÇ Deduplicate: skip if same audio was already transcribed ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    # ── Deduplicate: skip if same audio was already transcribed ───────────────
     audio_bytes: bytes = audio_file.read()
     if not audio_bytes:
         return None
@@ -72,11 +72,11 @@ def render_voice_input(page_key: str) -> Optional[str]:
         return None  # Already processed this recording
     st.session_state[_HASH_KEY] = audio_hash
 
-    # ΓöÇΓöÇ Transcribe ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    # ── Transcribe ────────────────────────────────────────────────────────────
     try:
         from backend.stt import transcribe_audio
 
-        with st.spinner("≡ƒÄñ Transcribing your voiceΓÇª"):
+        with st.spinner("🎙️ Transcribing your voice..."):
             result = transcribe_audio(audio_bytes)
 
     except Exception as exc:
@@ -89,16 +89,16 @@ def render_voice_input(page_key: str) -> Optional[str]:
 
     transcript = result.get("text", "").strip()
     if not transcript:
-        st.warning("≡ƒÄñ Could not understand the audio. Please try speaking again.")
+        st.warning("🎙️ Could not understand the audio. Please try speaking again.")
         return None
 
-    # ΓöÇΓöÇ Show success indicator ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    # ── Show success indicator ────────────────────────────────────────────────
     lang = result.get("language", "")
     conf = result.get("confidence", 0.0)
-    lang_tag = f" ┬╖ **{lang.upper()}**" if lang else ""
-    conf_tag = f" ┬╖ {conf:.0%} confidence" if conf > 0 else ""
-    preview = transcript[:90] + ("ΓÇª" if len(transcript) > 90 else "")
-    st.success(f'Γ£à **Heard:** "{preview}"{lang_tag}{conf_tag}')
+    lang_tag = f" • **{lang.upper()}**" if lang else ""
+    conf_tag = f" • {conf:.0%} confidence" if conf > 0 else ""
+    preview = transcript[:90] + ("..." if len(transcript) > 90 else "")
+    st.success(f'✅ **Heard:** "{preview}"{lang_tag}{conf_tag}')
 
     return transcript
 
@@ -115,7 +115,7 @@ def render_tts_controls(
     """
     Render a TTS player for a single assistant response.
 
-    Shows a "≡ƒöè Listen" button. On click, generates the MP3 (cached by MD5)
+    Shows a "🔊 Listen" button. On click, generates the MP3 (cached by MD5)
     and embeds a ``st.audio`` player. Subsequent calls serve from file cache.
 
     Args:
@@ -133,7 +133,7 @@ def render_tts_controls(
 
     # Manual listen button (only shown when auto-play is off)
     if not auto_play:
-        if st.button("≡ƒöè Listen", key=btn_key, use_container_width=False):
+        if st.button("🔊 Listen", key=btn_key, use_container_width=False):
             _do_generate_tts(response_text, _PATH_KEY)
 
     # Render audio player if we have a file path
@@ -145,14 +145,14 @@ def _do_generate_tts(text: str, session_key: str) -> None:
     try:
         from backend.tts import text_to_speech
 
-        with st.spinner("≡ƒöè Generating audioΓÇª"):
+        with st.spinner("🔊 Generating audio..."):
             path = text_to_speech(text)
 
         if path:
             st.session_state[session_key] = path
         else:
             st.warning(
-                "ΓÜá∩╕Å TTS generation failed. "
+                "⚠️ TTS generation failed. "
                 "Check your ElevenLabs API key / internet connection. "
                 "gTTS fallback also attempted."
             )
@@ -169,11 +169,11 @@ def _render_audio_player(session_key: str) -> None:
                 audio_data = f.read()
             st.audio(audio_data, format="audio/mp3")
         except Exception as exc:
-            st.caption(f"ΓÜá∩╕Å Could not load audio: {exc}")
+            st.caption(f"⚠️ Could not load audio: {exc}")
 
 
 # ---------------------------------------------------------------------------
-# TTS Settings ΓÇö auto-play toggle
+# TTS Settings — auto-play toggle
 # ---------------------------------------------------------------------------
 def render_tts_settings(page_key: str) -> bool:
     """
@@ -187,7 +187,7 @@ def render_tts_settings(page_key: str) -> bool:
         st.session_state[_TOGGLE_KEY] = False
 
     st.session_state[_TOGGLE_KEY] = st.toggle(
-        "≡ƒöè Auto-play",
+        "🔊 Auto-play",
         value=st.session_state[_TOGGLE_KEY],
         key=f"_tts_toggle_{page_key}",
         help="Automatically read each response aloud when it arrives.",

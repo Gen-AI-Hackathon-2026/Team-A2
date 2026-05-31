@@ -92,18 +92,39 @@ st.set_page_config(
 # ── Global CSS ─────────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap');
 
-html, body, [class*="css"] {
-    font-family: 'Inter', sans-serif;
-    background-color: #0f1117;
-    color: #e2e8f0;
+:root {
+    --primary: #4F46E5;
+    --primary-dark: #4338CA;
+    --primary-light: #818CF8;
+    --secondary: #0EA5E9;
+    --accent: #14B8A6;
+    --bg-dark: #F9FAFB;
+    --bg-card: #FFFFFF;
+    --border: #E5E7EB;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+    --shadow-glow: 0 10px 15px -3px rgba(0,0,0,0.05);
+    --text-primary: #111827;
+    --text-secondary: #4B5563;
 }
 
-/* Sidebar */
-section[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #0f1117 0%, #1a1f2e 100%);
-    border-right: 1px solid #1e293b;
+.stApp {
+    background: #F9FAFB !important;
+    font-family: 'Inter', sans-serif !important;
+    color: var(--text-primary) !important;
+}
+
+/* Override markdown text colors to ensure visibility */
+.stMarkdown p, .stMarkdown li, .stMarkdown div {
+    color: var(--text-primary) !important;
+}
+
+h1, h2, h3, .hero-title, .step-pill {
+    font-family: 'Outfit', sans-serif !important;
+    color: var(--text-primary) !important;
 }
 
 /* Main panel */
@@ -114,123 +135,158 @@ section[data-testid="stSidebar"] {
 
 /* Hero banner */
 .hero-banner {
-    background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 40%, #0c1a0f 100%);
-    border: 1px solid #312e81;
-    border-radius: 16px;
-    padding: 2rem 2.5rem;
-    margin-bottom: 1.5rem;
-    text-align: center;
+    background: #FFFFFF !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius) !important;
+    padding: 2rem 2.5rem !important;
+    margin-bottom: 1.5rem !important;
+    text-align: center !important;
+    box-shadow: var(--shadow) !important;
 }
 .hero-title {
-    font-size: 2.4rem;
-    font-weight: 700;
-    background: linear-gradient(135deg, #818cf8, #a855f7, #ec4899);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin: 0 0 0.3rem 0;
-    letter-spacing: -0.5px;
+    font-size: 2.4rem !important;
+    font-weight: 900 !important;
+    color: var(--text-primary) !important;
+    margin: 0 0 0.3rem 0 !important;
+    letter-spacing: -0.5px !important;
 }
 .hero-subtitle {
-    font-size: 1.05rem;
-    color: #94a3b8;
-    margin: 0;
-    font-weight: 400;
+    font-size: 1.05rem !important;
+    color: var(--text-secondary) !important;
+    margin: 0 !important;
+    font-weight: 400 !important;
 }
 
 /* Frame display area */
 .frame-container {
-    background: #111827;
-    border: 1px solid #1e293b;
-    border-radius: 12px;
-    padding: 1.2rem;
-    min-height: 400px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius) !important;
+    padding: 1.2rem !important;
+    min-height: 400px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: var(--shadow) !important;
 }
 
 /* Caption box */
 .caption-box {
-    background: #0f172a;
-    border-left: 3px solid #6366f1;
-    border-radius: 0 8px 8px 0;
-    padding: 0.8rem 1.2rem;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.82rem;
-    color: #94a3b8;
-    white-space: pre-line;
-    line-height: 1.6;
-    margin-top: 0.8rem;
+    background: #F3F4F6 !important;
+    border-left: 4px solid var(--primary) !important;
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0 !important;
+    padding: 1rem 1.4rem !important;
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 0.85rem !important;
+    color: var(--text-primary) !important;
+    white-space: pre-line !important;
+    line-height: 1.7 !important;
+    margin-top: 1rem !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
 }
 
 /* Progress bar custom */
 .stProgress > div > div {
-    background: linear-gradient(90deg, #6366f1, #a855f7);
+    background: var(--primary) !important;
 }
 
 /* Buttons */
 .stButton > button {
-    background: linear-gradient(135deg, #6366f1, #a855f7);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 0.95rem;
-    padding: 0.55rem 1.5rem;
-    transition: all 0.2s ease;
-    width: 100%;
+    background: #FFFFFF !important;
+    border: 1px solid var(--border) !important;
+    color: var(--text-secondary) !important;
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 600 !important;
+    border-radius: var(--radius-sm) !important;
+    padding: 0.55rem 1.5rem !important;
+    transition: all 0.2s ease !important;
+    width: 100% !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
 }
 .stButton > button:hover {
-    background: linear-gradient(135deg, #818cf8, #c084fc);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+    background: #F9FAFB !important;
+    border-color: #D1D5DB !important;
+    color: var(--text-primary) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Specific main triggers: ▶ Generate & Animate button should be Primary */
+.stButton > button[key*="gen_btn"], .stButton > button[key*="play_btn"] {
+    background: var(--primary) !important;
+    border: none !important;
+    color: #FFFFFF !important;
+    font-family: 'Outfit', sans-serif !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.5px !important;
+    box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.3) !important;
+}
+.stButton > button[key*="gen_btn"]:hover, .stButton > button[key*="play_btn"]:hover {
+    background: var(--primary-dark) !important;
+    color: #FFFFFF !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 12px -2px rgba(79, 70, 229, 0.45) !important;
 }
 
 /* Selectbox */
-.stSelectbox > div > div {
-    background: #1e293b;
-    border-color: #334155;
-    color: #e2e8f0;
+div[data-baseweb="select"] {
+    background: #FFFFFF !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-sm) !important;
+    color: var(--text-primary) !important;
+}
+div[data-baseweb="select"] > div {
+    background: transparent !important;
+    color: var(--text-primary) !important;
 }
 
 /* Slider */
 .stSlider > div > div > div {
-    background: #6366f1;
+    background: var(--primary) !important;
 }
 
 /* Metric cards */
 .metric-card {
-    background: #1e293b;
-    border: 1px solid #334155;
-    border-radius: 10px;
-    padding: 0.9rem 1rem;
-    text-align: center;
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-sm) !important;
+    padding: 0.9rem 1rem !important;
+    text-align: center !important;
+    transition: all 0.2s ease !important;
+    box-shadow: var(--shadow) !important;
+}
+.metric-card:hover {
+    border-color: #D1D5DB !important;
+    transform: translateY(-1px) !important;
 }
 .metric-num {
-    font-size: 1.6rem;
-    font-weight: 700;
-    color: #818cf8;
+    font-family: 'Outfit', sans-serif !important;
+    font-size: 1.6rem !important;
+    font-weight: 800 !important;
+    color: var(--text-primary) !important;
 }
 .metric-label {
-    font-size: 0.75rem;
-    color: #64748b;
-    margin-top: 0.1rem;
+    font-size: 0.72rem !important;
+    color: var(--text-secondary) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.8px !important;
 }
 
 /* Step indicator */
 .step-pill {
-    display: inline-block;
-    background: #312e81;
-    color: #a5b4fc;
-    border-radius: 20px;
-    padding: 0.2rem 0.8rem;
-    font-size: 0.78rem;
-    font-family: 'JetBrains Mono', monospace;
-    margin-bottom: 0.5rem;
+    display: inline-block !important;
+    background: #EEF2FF !important;
+    border: 1px solid #C7D2FE !important;
+    color: var(--primary-dark) !important;
+    border-radius: 20px !important;
+    padding: 0.25rem 0.9rem !important;
+    font-size: 0.75rem !important;
+    font-family: 'JetBrains Mono', monospace !important;
+    font-weight: 600 !important;
+    margin-bottom: 0.8rem !important;
 }
 
-hr { border-color: #1e293b; }
+hr { border-color: var(--border) !important; }
 
 /* Hide streamlit branding */
 #MainMenu, footer { visibility: hidden; }
@@ -320,30 +376,33 @@ if "playing" not in st.session_state:
 if "generated" not in st.session_state:
     st.session_state.generated = False
 
-# ── Sidebar ────────────────────────────────────────────────────────────────────
-with st.sidebar:
-    st.markdown("**Visualization Engine** · v1.0")
-    st.markdown("---")
+# ── Main Content Settings ────────────────────────────────────────────────────────
+st.markdown(
+    '<a href="http://localhost:8501" target="_self" style="text-decoration: none;">'
+    '<button style="background:var(--bg-card); color:var(--text-primary); border:1px solid var(--border); padding:8px 16px; border-radius:8px; cursor:pointer; font-family:Inter; font-weight:600; font-size:14px; box-shadow:0 1px 2px rgba(0,0,0,0.05); transition:all 0.2s ease;">'
+    '← Back to AI Tutor'
+    '</button></a><br><br>', 
+    unsafe_allow_html=True
+)
 
-    st.markdown("#### 📖 Select Concept")
-    selected_label = st.selectbox(
-        "Concept",
-        list(TOPICS.keys()),
-        label_visibility="collapsed",
-    )
-    cfg = TOPICS[selected_label]
+st.markdown("#### 📖 Select Concept")
+selected_label = st.selectbox(
+    "Concept",
+    list(TOPICS.keys()),
+    label_visibility="collapsed",
+)
+cfg = TOPICS[selected_label]
 
-    st.markdown(f"""
-    <div style='background:{TAG_COLORS.get(cfg["tag"],"#1e293b")};
-                border-radius:8px; padding:0.7rem 0.9rem; margin:0.5rem 0;
-                font-size:0.82rem; color:#cbd5e1; line-height:1.5;'>
-        <b style='color:#e2e8f0;'>{selected_label.strip()}</b><br>
-        {cfg["description"]}
-    </div>
-    """, unsafe_allow_html=True)
+st.markdown(f"""
+<div style='background:{TAG_COLORS.get(cfg["tag"],"#1e293b")};
+            border-radius:8px; padding:0.7rem 0.9rem; margin:0.5rem 0;
+            font-size:0.82rem; color:#cbd5e1; line-height:1.5;'>
+    <b style='color:#e2e8f0;'>{selected_label.strip()}</b><br>
+    {cfg["description"]}
+</div>
+""", unsafe_allow_html=True)
 
-    st.markdown("---")
-    st.markdown("#### ⚙️ Playback Settings")
+with st.expander("⚙️ Playback Settings", expanded=False):
     speed = st.slider("Frame Speed (sec)", min_value=3.0, max_value=12.0,
                       value=5.0, step=0.5,
                       help="Time to hold each frame before transitioning")
@@ -354,46 +413,46 @@ with st.sidebar:
     enable_tts = st.checkbox("🔊 Voice narration (gTTS)", value=True,
                               help="Reads each step caption aloud. Requires internet.")
 
-    st.markdown("---")
+st.markdown("---")
 
-    if st.button("▶  Generate & Animate", key="gen_btn"):
-        with st.spinner("Generating visualization…"):
-            raw_frames = generate_visualization(cfg)
-            # Attach TTS audio bytes to each frame if enabled
-            if enable_tts:
-                tts_spinner = st.empty()
-                tts_spinner.caption("🎙️ Generating voice narration…")
-                for f in raw_frames:
-                    f["audio"] = generate_tts_audio(f.get("caption", ""))
-                tts_spinner.empty()
-            st.session_state.frames = raw_frames
+if st.button("▶  Generate & Animate", key="gen_btn"):
+    with st.spinner("Generating visualization…"):
+        raw_frames = generate_visualization(cfg)
+        # Attach TTS audio bytes to each frame if enabled
+        if enable_tts:
+            tts_spinner = st.empty()
+            tts_spinner.caption("🎙️ Generating voice narration…")
+            for f in raw_frames:
+                f["audio"] = generate_tts_audio(f.get("caption", ""))
+            tts_spinner.empty()
+        st.session_state.frames = raw_frames
+        st.session_state.current_frame = 0
+        st.session_state.playing = True
+        st.session_state.generated = True
+        st.session_state.tts_enabled = enable_tts
+
+if st.session_state.generated and st.session_state.frames:
+    col_p, col_r = st.columns(2)
+    with col_p:
+        if st.button("⏸ Pause"):
+            st.session_state.playing = False
+    with col_r:
+        if st.button("↺ Reset"):
             st.session_state.current_frame = 0
-            st.session_state.playing = True
-            st.session_state.generated = True
-            st.session_state.tts_enabled = enable_tts
+            st.session_state.playing = False
 
-    if st.session_state.generated and st.session_state.frames:
-        col_p, col_r = st.columns(2)
-        with col_p:
-            if st.button("⏸ Pause"):
-                st.session_state.playing = False
-        with col_r:
-            if st.button("↺ Reset"):
-                st.session_state.current_frame = 0
-                st.session_state.playing = False
-
-    st.markdown("---")
-    st.markdown("""
-    <div style='font-size:0.72rem; color:#475569; line-height:1.6;'>
-    <b>Supported Modules</b><br>
-    🔗 Linked List (Graphviz)<br>
-    🔍 Binary Search (Matplotlib)<br>
-    🌀 Recursion Stack (Matplotlib)<br>
-    👁️ Transformer Attention (Matplotlib)<br>
-    🧠 Neural Network (Matplotlib)<br>
-    📚 RAG Pipeline (Matplotlib)
-    </div>
-    """, unsafe_allow_html=True)
+st.markdown("---")
+st.markdown("""
+<div style='font-size:0.72rem; color:#475569; line-height:1.6;'>
+<b>Supported Modules</b><br>
+🔗 Linked List (Graphviz)<br>
+🔍 Binary Search (Matplotlib)<br>
+🌀 Recursion Stack (Matplotlib)<br>
+👁️ Transformer Attention (Matplotlib)<br>
+🧠 Neural Network (Matplotlib)<br>
+📚 RAG Pipeline (Matplotlib)
+</div>
+""", unsafe_allow_html=True)
 
 # ── Main area ──────────────────────────────────────────────────────────────────
 # Hero

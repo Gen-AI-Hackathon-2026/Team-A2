@@ -10,12 +10,12 @@ import numpy as np
 import io
 from PIL import Image
 
-DARK   = "#0f1117"
-TEXT   = "#e2e8f0"
-BLUE   = "#3b82f6"      # untouched node
-PURPLE = "#a855f7"      # reversed node
-AMBER  = "#f59e0b"      # current node (curr pointer)
-GRAY   = "#374151"
+DARK   = "#F9FAFB"
+TEXT   = "#111827"
+BLUE   = "#4F46E5"      # untouched node
+PURPLE = "#818CF8"      # reversed node
+AMBER  = "#F59E0B"      # current node (curr pointer)
+GRAY   = "#E5E7EB"
 
 
 def _fig_to_pil(fig) -> Image.Image:

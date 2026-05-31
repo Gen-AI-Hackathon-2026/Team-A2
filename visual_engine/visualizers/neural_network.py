@@ -8,13 +8,13 @@ import numpy as np
 import io
 from PIL import Image
 
-DARK = "#0f1117"
-TEXT = "#e2e8f0"
-BLUE = "#3b82f6"
-PURPLE = "#a855f7"
-GREEN = "#22c55e"
-AMBER = "#f59e0b"
-GRAY = "#374151"
+DARK = "#F9FAFB"
+TEXT = "#111827"
+BLUE = "#4F46E5"
+PURPLE = "#818CF8"
+GREEN = "#10B981"
+AMBER = "#F59E0B"
+GRAY = "#E5E7EB"
 
 
 def _fig_to_pil(fig) -> Image.Image:

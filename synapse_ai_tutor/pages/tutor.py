@@ -76,49 +76,66 @@ def render_tutor():
     update_knowledge_gaps(username, topic, knowledge_gaps)
     update_session_access(username, topic)
 
-    # ΓöÇΓöÇ Header ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
-    st.markdown(
-        f"""
-<div class="fade-in" style="margin-bottom:0.8rem;">
-    <h1 class="gradient-text" style="font-size:1.9rem;margin-bottom:0.2rem;">AI Tutor</h1>
-    <p style="color:#A0A0C0;font-size:0.88rem;">
-        Adaptive companion for <strong style="color:#00D2FF;">{topic}</strong>
-    </p>
-</div>
-""",
-        unsafe_allow_html=True,
-    )
+    # ── Header ─────────────────────────────────────────────────────────────
+    head_col1, head_col2 = st.columns([2, 1])
+    with head_col1:
+        st.markdown(
+            f"""
+        <div class="animate-fade-in" style="margin-bottom:0.8rem;">
+            <h1 style="font-size:1.9rem;margin-bottom:0.2rem;">AI Tutor</h1>
+            <p style="color:var(--text-secondary);font-size:0.88rem;">
+                Adaptive companion for <strong style="color:var(--primary);">{topic}</strong>
+            </p>
+        </div>
+        """,
+            unsafe_allow_html=True,
+        )
+    with head_col2:
+        action_c1, action_c2 = st.columns(2)
+        with action_c1:
+            focus_label = "🔍 Exit Focus" if st.session_state.get("focus_mode") else "🎯 Focus Mode"
+            if st.button(focus_label, use_container_width=True, key="focus_tutor"):
+                st.session_state.focus_mode = not st.session_state.get("focus_mode", False)
+                st.rerun()
+        with action_c2:
+            if st.button("👁️ Visual", use_container_width=True, key="vis_tutor"):
+                # Basic mapping, ideally we could use the global mapping
+                topic_map = {"Neural Networks": "neural_network", "Transformers": "transformer", "Fine-Tuning and RAG": "rag_pipeline"}
+                if topic in topic_map:
+                    st.session_state.direct_visualizer_topic = topic_map[topic]
+                st.session_state.page = "visualizer"
+                st.rerun()
 
-    # ΓöÇΓöÇ Info bar ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
-    lc = LEVEL_COLORS.get(level, "#A0A0C0")
+    # ── Info bar ───────────────────────────────────────────────────────────
+    lc = LEVEL_COLORS.get(level, "var(--text-secondary)")
     try:
         connected = check_connection()
     except Exception:
         connected = False
-    llm_color = "#2ECC71" if connected else "#E74C3C"
+    llm_color = "var(--success)" if connected else "var(--danger)"
     llm_label = "Online" if connected else "Offline (Fallback)"
 
     ic1, ic2, ic3, ic4 = st.columns(4)
     with ic1:
-        st.markdown(f'<div class="stat-card"><div style="color:#A0A0C0;font-size:0.68rem;text-transform:uppercase;">Topic</div><div style="color:#00D2FF;font-weight:700;font-size:0.85rem;margin-top:0.15rem;">{topic}</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="stat-card"><div style="color:var(--text-secondary);font-size:0.68rem;text-transform:uppercase;">Topic</div><div style="color:var(--primary);font-weight:700;font-size:0.85rem;margin-top:0.15rem;">{topic}</div></div>', unsafe_allow_html=True)
     with ic2:
-        st.markdown(f'<div class="stat-card"><div style="color:#A0A0C0;font-size:0.68rem;text-transform:uppercase;">Level</div><div style="color:{lc};font-weight:700;font-size:0.85rem;margin-top:0.15rem;">{level}</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="stat-card"><div style="color:var(--text-secondary);font-size:0.68rem;text-transform:uppercase;">Level</div><div style="color:{lc};font-weight:700;font-size:0.85rem;margin-top:0.15rem;">{level}</div></div>', unsafe_allow_html=True)
     with ic3:
-        st.markdown(f'<div class="stat-card"><div style="color:#A0A0C0;font-size:0.68rem;text-transform:uppercase;">Mastery</div><div style="color:#FFFFFF;font-weight:700;font-size:0.85rem;margin-top:0.15rem;">{mastery}%</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="stat-card"><div style="color:var(--text-secondary);font-size:0.68rem;text-transform:uppercase;">Mastery</div><div style="color:var(--text-primary);font-weight:700;font-size:0.85rem;margin-top:0.15rem;">{mastery}%</div></div>', unsafe_allow_html=True)
     with ic4:
-        st.markdown(f'<div class="stat-card"><div style="color:#A0A0C0;font-size:0.68rem;text-transform:uppercase;">AI Model</div><div style="color:{llm_color};font-weight:700;font-size:0.85rem;margin-top:0.15rem;">{llm_label}</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="stat-card"><div style="color:var(--text-secondary);font-size:0.68rem;text-transform:uppercase;">AI Model</div><div style="color:{llm_color};font-weight:700;font-size:0.85rem;margin-top:0.15rem;">{llm_label}</div></div>', unsafe_allow_html=True)
 
-    # ΓöÇΓöÇ Knowledge Gaps ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    # ── Knowledge Gaps ─────────────────────────────────────────────────────
     if knowledge_gaps:
         gap_str = " &nbsp;|&nbsp; ".join(
-            f"<span style='color:#F39C12;'>{g}</span>" for g in knowledge_gaps[:5]
+            f"<span style='color:var(--warning);'>{g}</span>" for g in knowledge_gaps[:5]
         )
         st.markdown(
             f"""
 <div class="gap-warning" style="margin-top:0.7rem;">
-    <div style="color:#F39C12;font-weight:600;font-size:0.85rem;margin-bottom:0.25rem;">Knowledge Gaps</div>
-    <div style="font-size:0.8rem;">{gap_str}</div>
-    <div style="color:#6B6B8D;font-size:0.72rem;margin-top:0.25rem;">
+    <div style="color:var(--warning);font-weight:600;font-size:0.85rem;margin-bottom:0.25rem;">Knowledge Gaps</div>
+    <div style="font-size:0.8rem;color:var(--text-primary);">{gap_str}</div>
+    <div style="color:var(--text-muted);font-size:0.72rem;margin-top:0.25rem;">
         {gap_analysis.get("recommendation", "")}
     </div>
 </div>
@@ -211,13 +228,13 @@ def _render_chat(topic, level, mastery, knowledge_gaps, username):
                                 unsafe_allow_html=True,
                             )
 
-    # ΓöÇΓöÇ Determine user input: typed text OR voice transcript ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
-    typed_q = st.chat_input(f"Ask about {topic}ΓÇª", key="tutor_input")
+    # ── Determine user input: typed text OR voice transcript ──────────────
+    typed_q = st.chat_input(f"Ask about {topic}...", key="tutor_input")
     user_q  = typed_q or voice_transcript  # voice wins if both arrive simultaneously
 
     if user_q:
-        # ΓöÇΓöÇ Capture conversation context BEFORE adding current message ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
-        # (so the LLM sees prior exchanges, not the question itΓÇÖs about to answer)
+        # ── Capture conversation context BEFORE adding current message ────────
+        # (so the LLM sees prior exchanges, not the question it’s about to answer)
         recent_ctx = get_recent_messages(username, topic, n=4)
 
         chat_history.append({"role": "user", "content": user_q, "sources": []})

@@ -8,11 +8,11 @@ import matplotlib.patches as mpatches
 import io
 from PIL import Image
 
-DARK = "#0f1117"
-TEXT = "#e2e8f0"
-PURPLE = "#a855f7"
-GREEN = "#22c55e"
-BLUE = "#3b82f6"
+DARK = "#F9FAFB"
+TEXT = "#111827"
+PURPLE = "#818CF8"
+GREEN = "#10B981"
+BLUE = "#4F46E5"
 
 
 def _fig_to_pil(fig) -> Image.Image:

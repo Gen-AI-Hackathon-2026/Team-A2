@@ -25,6 +25,12 @@ def _hex_to_rgb(hex_color: str) -> str:
     r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
     return f"{r},{g},{b}"
 
+VISUALIZER_MAP = {
+    "Neural Networks": "neural_network",
+    "Transformers": "transformer",
+    "Fine-Tuning and RAG": "rag_pipeline",
+}
+
 
 def render_topic_selection():
     username = st.session_state.username
@@ -71,41 +77,60 @@ def render_topic_selection():
                 # Mastery bar
                 mastery_bar = ""
                 if mastery > 0:
-                    mastery_bar = f"""
-                    <div style="margin-top:0.5rem;">
-                        <div style="display:flex;justify-content:space-between;font-size:0.65rem;color:#A0A0C0;margin-bottom:0.15rem;">
-                            <span>Mastery</span><span>{mastery}%</span>
-                        </div>
-                        <div style="background:rgba(255,255,255,0.05);border-radius:3px;height:3px;overflow:hidden;">
-                            <div style="background:{meta['color']};width:{mastery}%;height:100%;border-radius:3px;"></div>
-                        </div>
-                    </div>"""
+                    mastery_bar = (
+                        f'<div style="margin-top:0.5rem;">'
+                        f'<div style="display:flex;justify-content:space-between;font-size:0.65rem;color:var(--text-secondary);margin-bottom:0.15rem;">'
+                        f'<span>Mastery</span><span>{mastery}%</span>'
+                        f'</div>'
+                        f'<div style="background:var(--border);border-radius:var(--radius-pill);height:4px;overflow:hidden;">'
+                        f'<div style="background:{meta["color"]};width:{mastery}%;height:100%;border-radius:3px;"></div>'
+                        f'</div>'
+                        f'</div>'
+                    )
 
                 # Selected indicator
-                selected_border = f"border: 2px solid {meta['color']}; box-shadow: 0 0 16px rgba({_hex_to_rgb(meta['color'])},0.35);" if is_selected else ""
+                selected_border = f"border: 2px solid {meta['color']}; box-shadow: 0 0 0 3px rgba({_hex_to_rgb(meta['color'])},0.2);" if is_selected else ""
 
-                st.markdown(f"""
-                <div class="topic-card" style="border-color:rgba({_hex_to_rgb(meta['color'])},0.2);{selected_border}">
-                    <div style="font-size:1.2rem;font-weight:900;letter-spacing:-1px;
-                                background:linear-gradient(135deg,{meta['color']},{meta['color']}88);
-                                -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-                                margin-bottom:0.3rem;">{meta['abbr']}</div>
-                    <div class="topic-name">{topic_name}</div>
-                    <div class="topic-desc">{meta['description']}</div>
-                    <div style="margin-top:0.4rem;">{badge_html}</div>
-                    {mastery_bar}
-                    {"<div style='font-size:0.62rem;color:#2ECC71;margin-top:0.3rem;'>Selected</div>" if is_selected else ""}
-                </div>
-                """, unsafe_allow_html=True)
+                st.markdown(
+                    f'<div class="topic-card" style="{selected_border}">'
+                    f'<div style="font-size:1.2rem;font-weight:900;letter-spacing:-1px;'
+                    f'color:{meta["color"]};'
+                    f'margin-bottom:0.3rem;">{meta["abbr"]}</div>'
+                    f'<div class="topic-name">{topic_name}</div>'
+                    f'<div class="topic-desc">{meta["description"]}</div>'
+                    f'<div style="margin-top:0.4rem;">{badge_html}</div>'
+                    f'{mastery_bar}'
+                    f'{"<div style=\'font-size:0.62rem;color:var(--success);font-weight:600;margin-top:0.3rem;\'>✓ Selected</div>" if is_selected else ""}'
+                    f'</div>',
+                    unsafe_allow_html=True
+                )
 
                 btn_label = "Deselect" if is_selected else ("Select" if not assessed else "Re-Select")
-                if st.button(btn_label, key=f"sel_{topic_name}", use_container_width=True):
-                    if is_selected:
-                        st.session_state.selected_topics.remove(topic_name)
-                    else:
-                        if topic_name not in st.session_state.selected_topics:
-                            st.session_state.selected_topics.append(topic_name)
-                    st.rerun()
+                
+                # Split into two columns for the buttons if visualizer available
+                if topic_name in VISUALIZER_MAP:
+                    btn_col1, btn_col2 = st.columns(2)
+                    with btn_col1:
+                        if st.button(btn_label, key=f"sel_{topic_name}", use_container_width=True):
+                            if is_selected:
+                                st.session_state.selected_topics.remove(topic_name)
+                            else:
+                                if topic_name not in st.session_state.selected_topics:
+                                    st.session_state.selected_topics.append(topic_name)
+                            st.rerun()
+                    with btn_col2:
+                        if st.button("👁️ Visual", key=f"vis_{topic_name}", use_container_width=True):
+                            st.session_state.direct_visualizer_topic = VISUALIZER_MAP[topic_name]
+                            st.session_state.page = "visualizer"
+                            st.rerun()
+                else:
+                    if st.button(btn_label, key=f"sel_{topic_name}", use_container_width=True):
+                        if is_selected:
+                            st.session_state.selected_topics.remove(topic_name)
+                        else:
+                            if topic_name not in st.session_state.selected_topics:
+                                st.session_state.selected_topics.append(topic_name)
+                        st.rerun()
 
         st.markdown("<br>", unsafe_allow_html=True)
 
@@ -120,12 +145,13 @@ def render_topic_selection():
     # Summary of selected
     topic_tags = "  |  ".join([f"**{t}**" for t in selected])
     st.markdown(f"""
-    <div style="background:rgba(108,99,255,0.06);border:1px solid rgba(108,99,255,0.15);
-                border-radius:12px;padding:1rem 1.5rem;margin-bottom:1rem;">
-        <div style="color:#A0A0C0;font-size:0.78rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:0.4rem;">
+    <div style="background:var(--bg-elevated);border:1px solid var(--border);
+                border-radius:var(--radius-sm);padding:1rem 1.5rem;margin-bottom:1rem;
+                box-shadow:var(--shadow-sm);">
+        <div style="color:var(--text-secondary);font-size:0.78rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:0.4rem;">
             {len(selected)} topic{"s" if len(selected) > 1 else ""} selected
         </div>
-        <div style="color:#FFFFFF;font-weight:600;font-size:0.9rem;">{" &nbsp;|&nbsp; ".join(selected)}</div>
+        <div style="color:var(--text-primary);font-weight:600;font-size:0.9rem;">{" &nbsp;|&nbsp; ".join(selected)}</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -171,7 +197,7 @@ def render_topic_selection():
     if already_assessed:
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown("""
-        <div style="font-weight:600;color:#FFFFFF;font-size:0.95rem;margin-bottom:0.8rem;">
+        <div style="font-weight:600;color:var(--text-primary);font-size:0.95rem;margin-bottom:0.8rem;">
             Existing Profile (from previous sessions)
         </div>""", unsafe_allow_html=True)
 
@@ -182,23 +208,24 @@ def render_topic_selection():
             level = progress.get("level", "Not Assessed")
             gaps = progress.get("knowledge_gaps", [])
 
-            lc = {"Beginner": "#2ECC71", "Intermediate": "#F39C12", "Advanced": "#8B83FF"}.get(level, "#A0A0C0")
+            lc = {"Beginner": "var(--success)", "Intermediate": "var(--warning)", "Advanced": "var(--danger)"}.get(level, "var(--text-secondary)")
 
             gaps_html = ""
             if gaps:
-                gaps_html = "<br>".join([f"<span style='font-size:0.7rem;color:#F39C12;'>* {g}</span>" for g in gaps[:3]])
+                gaps_html = "<br>".join([f"<span style='font-size:0.7rem;color:var(--warning);'>* {g}</span>" for g in gaps[:3]])
             else:
-                gaps_html = "<span style='font-size:0.7rem;color:#6B6B8D;'>No gaps detected</span>"
+                gaps_html = "<span style='font-size:0.7rem;color:var(--text-muted);'>No gaps detected</span>"
 
             with cols[i]:
-                st.markdown(f"""
-                <div class="synapse-card" style="text-align:center;padding:1rem;">
-                    <div style="color:#A0A0C0;font-size:0.72rem;margin-bottom:0.4rem;">{topic_name}</div>
-                    <div style="font-size:1.8rem;font-weight:800;color:{lc};">{mastery}%</div>
-                    <div style="color:{lc};font-weight:600;font-size:0.85rem;margin-bottom:0.5rem;">{level}</div>
-                    <div style="text-align:left;">{gaps_html}</div>
-                </div>
-                """, unsafe_allow_html=True)
+                st.markdown(
+                    f'<div class="synapse-card" style="text-align:center;padding:1rem;">'
+                    f'<div style="color:var(--text-secondary);font-size:0.72rem;margin-bottom:0.4rem;">{topic_name}</div>'
+                    f'<div style="font-size:1.8rem;font-weight:800;color:{lc};">{mastery}%</div>'
+                    f'<div style="color:{lc};font-weight:600;font-size:0.85rem;margin-bottom:0.5rem;">{level}</div>'
+                    f'<div style="text-align:left;">{gaps_html}</div>'
+                    f'</div>',
+                    unsafe_allow_html=True
+                )
 
 
 def _start_next_assessment():

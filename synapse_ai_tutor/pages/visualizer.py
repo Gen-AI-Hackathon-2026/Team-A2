@@ -1,545 +1,329 @@
 """
-Visualizer Page for Synapse AI Tutor.
-Interactive knowledge graph (concept-level) using GraphRAG graph data,
-plus mastery bar and skill radar using Plotly.
-
-Green  = mastered concepts
-Yellow = partial mastery (assessed but < 76%)
-Red    = knowledge gaps
-Grey   = not yet assessed
+Visualization Engine Page for Synapse AI Tutor.
+Natively integrates the visual_engine application.
 """
+import time
+import sys
+import os
+import io
+import re
+import numpy as np
 
 import streamlit as st
-import plotly.graph_objects as go
-import math
-from backend.progress_tracker import get_user_progress, get_overall_stats
+from PIL import Image
 
-ALL_TOPICS = [
-    "Neural Networks", "CNNs", "RNNs", "Transformers", "LLMs",
-    "Prompt Engineering", "Generative AI Fundamentals", "GANs",
-    "Diffusion Models", "Fine-Tuning and RAG",
-]
+# Add visual_engine to path so we can import router
+vis_engine_path = os.path.join(os.path.dirname(__file__), '..', '..', 'visual_engine')
+if vis_engine_path not in sys.path:
+    sys.path.insert(0, vis_engine_path)
 
-TOPIC_COLORS = {
-    "Neural Networks":            "#6C63FF",
-    "CNNs":                       "#00D2FF",
-    "RNNs":                       "#FF6B6B",
-    "Transformers":               "#FFB347",
-    "LLMs":                       "#2ECC71",
-    "Prompt Engineering":         "#E74C3C",
-    "Generative AI Fundamentals": "#9B59B6",
-    "GANs":                       "#1ABC9C",
-    "Diffusion Models":           "#3498DB",
-    "Fine-Tuning and RAG":        "#F39C12",
-}
-LEVEL_COLORS = {
-    "Beginner":    "#2ECC71",
-    "Intermediate":"#F39C12",
-    "Advanced":    "#8B83FF",
-    "Not Assessed":"#6B6B8D",
-}
+from router import generate_visualization
 
-# Status colours for the concept graph
-STATUS_COLORS = {
-    "mastered": "#2ECC71",
-    "partial":  "#F39C12",
-    "gap":      "#E74C3C",
-    "unknown":  "#6B6B8D",
-}
+# ── Crossfade helper ───────────────────────────────────────────────────────────
+def _crossfade_frames(img_a: Image.Image, img_b: Image.Image,
+                      steps: int = 8) -> list:
+    a = img_a.convert("RGBA")
+    b = img_b.convert("RGBA")
+    w = max(a.width, b.width)
+    h = max(a.height, b.height)
+    a = a.resize((w, h), Image.LANCZOS)
+    b = b.resize((w, h), Image.LANCZOS)
 
+    blends = []
+    for i in range(1, steps + 1):
+        t = i / (steps + 1)
+        t = t * t * (3 - 2 * t)
+        blended = Image.blend(a, b, t).convert("RGB")
+        blends.append(blended)
+    return blends
 
-# ---------------------------------------------------------------------------
-# Topic-level graph (existing)
-# ---------------------------------------------------------------------------
+def _estimate_tts_duration(caption: str) -> float:
+    clean = _clean_for_tts(caption)
+    word_count = len(clean.split()) if clean else 0
+    speaking_secs = (word_count / 140) * 60
+    return max(2.5, speaking_secs + 1.2)
 
-def _get_topic_positions() -> dict:
-    inner = ["Neural Networks", "Transformers", "LLMs", "Generative AI Fundamentals"]
-    outer = [t for t in ALL_TOPICS if t not in inner]
-    pos = {}
-    inner_xy = [(-0.38, 0.32), (0.38, 0.32), (0.38, -0.32), (-0.38, -0.32)]
-    for i, t in enumerate(inner):
-        pos[t] = inner_xy[i]
-    for i, t in enumerate(outer):
-        angle = (2 * math.pi * i) / len(outer) - math.pi / 2
-        pos[t] = (0.85 * math.cos(angle), 0.85 * math.sin(angle))
-    return pos
+def _clean_for_tts(text: str) -> str:
+    text = re.sub(r'[^\x00-\x7F]+', ' ', text)
+    text = re.sub(r'[\*\_\`\#\>\|]', '', text)
+    text = re.sub(r'\s+', ' ', text).strip()
+    return text
 
-
-TOPIC_EDGES = [
-    ("Neural Networks", "CNNs"),
-    ("Neural Networks", "RNNs"),
-    ("Neural Networks", "Transformers"),
-    ("Neural Networks", "GANs"),
-    ("Neural Networks", "Diffusion Models"),
-    ("Neural Networks", "Generative AI Fundamentals"),
-    ("RNNs", "Transformers"),
-    ("Transformers", "LLMs"),
-    ("Transformers", "Fine-Tuning and RAG"),
-    ("LLMs", "Prompt Engineering"),
-    ("LLMs", "Fine-Tuning and RAG"),
-    ("Generative AI Fundamentals", "GANs"),
-    ("Generative AI Fundamentals", "Diffusion Models"),
-    ("Generative AI Fundamentals", "LLMs"),
-]
-
-
-def _build_topic_graph(user_progress: dict) -> go.Figure:
-    positions = _get_topic_positions()
-    edge_x, edge_y = [], []
-    for src, dst in TOPIC_EDGES:
-        x0, y0 = positions[src]
-        x1, y1 = positions[dst]
-        edge_x += [x0, x1, None]
-        edge_y += [y0, y1, None]
-
-    node_x, node_y, node_text, node_hover = [], [], [], []
-    node_colors, node_sizes, node_borders = [], [], []
-
-    for topic in ALL_TOPICS:
-        x, y    = positions[topic]
-        data    = user_progress.get(topic, {})
-        mastery = data.get("mastery", 0)
-        level   = data.get("level", "Not Assessed")
-        gaps    = data.get("knowledge_gaps", [])
-        node_x.append(x); node_y.append(y)
-        short = (topic[:11] + "...") if len(topic) > 11 else topic
-        node_text.append(short)
-        gaps_str = "<br>".join(f"* {g}" for g in gaps[:3]) if gaps else "None"
-        node_hover.append(f"<b>{topic}</b><br>Level: {level}<br>Mastery: {mastery}%<br>Gaps: {gaps_str}")
-        node_colors.append(TOPIC_COLORS.get(topic, "#6C63FF"))
-        node_sizes.append(28 + mastery * 0.22)
-        node_borders.append(LEVEL_COLORS.get(level, "#6B6B8D"))
-
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(
-        x=edge_x, y=edge_y, mode="lines",
-        line=dict(width=1.1, color="rgba(108,99,255,0.18)"),
-        hoverinfo="none", showlegend=False,
-    ))
-    fig.add_trace(go.Scatter(
-        x=node_x, y=node_y, mode="markers+text",
-        text=node_text, textposition="top center",
-        textfont=dict(size=9, color="#FFFFFF"),
-        hovertext=node_hover, hoverinfo="text",
-        marker=dict(size=node_sizes, color=node_colors,
-                    line=dict(color=node_borders, width=2.2), opacity=0.9),
-        showlegend=False,
-    ))
-    fig.update_layout(
-        title=dict(text="Knowledge Graph - Topic Relationships and Mastery",
-                   font=dict(size=15, color="#FFFFFF"), x=0.5),
-        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False, range=[-1.15, 1.15]),
-        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False, range=[-1.15, 1.15]),
-        paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(14,14,30,0.35)",
-        height=500, margin=dict(l=15, r=15, t=55, b=15),
-        hoverlabel=dict(bgcolor="#1A1A3E", font_size=12, font_color="#FFFFFF",
-                        bordercolor="rgba(108,99,255,0.4)"),
-    )
-    return fig
-
-
-# ---------------------------------------------------------------------------
-# Concept-level GraphRAG graph
-# ---------------------------------------------------------------------------
-
-def _build_concept_graph(selected_topic: str, user_progress: dict) -> go.Figure:
-    """
-    Build an interactive concept-level graph for the selected topic,
-    loaded from the knowledge graph JSON via the KG module.
-
-    Nodes are coloured by mastery status:
-      Green  = mastered
-      Yellow = partial
-      Red    = gap
-      Grey   = unknown
-    """
+def generate_tts_audio(caption: str) -> bytes | None:
     try:
-        from backend.knowledge_graph import get_all_concepts_for_topic, _get_graph
-        import networkx as nx
-
-        G = _get_graph()
-        topic_data = user_progress.get(selected_topic, {})
-        gaps       = set(topic_data.get("knowledge_gaps", []))
-        mastery    = topic_data.get("mastery", 0)
-
-        concepts = get_all_concepts_for_topic(selected_topic)
-        concepts = [c for c in concepts if c in G and c != selected_topic]
-
-        if not concepts:
+        from gtts import gTTS
+        clean = _clean_for_tts(caption)
+        if not clean:
             return None
-
-        # Layout: radial around topic centre
-        n = len(concepts)
-        positions = {selected_topic: (0.0, 0.0)}
-        for i, c in enumerate(concepts):
-            angle = (2 * math.pi * i) / n
-            positions[c] = (math.cos(angle) * 0.75, math.sin(angle) * 0.75)
-
-        # Edges: topic -> concept + concept -> concept
-        edge_x, edge_y = [], []
-        edge_colors = []
-        all_nodes = [selected_topic] + concepts
-        for u in all_nodes:
-            for v in G.successors(u):
-                if v in positions:
-                    x0, y0 = positions[u]
-                    x1, y1 = positions[v]
-                    edge_x += [x0, x1, None]
-                    edge_y += [y0, y1, None]
-
-        node_x, node_y, node_text, node_hover = [], [], [], []
-        node_colors, node_sizes, node_borders = [], [], []
-
-        def _concept_status(c):
-            if c in gaps:
-                return "gap"
-            if c == selected_topic:
-                if mastery >= 76:
-                    return "mastered"
-                if mastery > 0:
-                    return "partial"
-                return "unknown"
-            # Check if concept name hints at mastery
-            return "unknown"
-
-        # Topic node (centre)
-        status = _concept_status(selected_topic)
-        node_x.append(0.0); node_y.append(0.0)
-        short_t = (selected_topic[:12] + "...") if len(selected_topic) > 12 else selected_topic
-        node_text.append(short_t)
-        node_hover.append(f"<b>{selected_topic}</b> (Topic)<br>Mastery: {mastery}%")
-        node_colors.append(TOPIC_COLORS.get(selected_topic, "#6C63FF"))
-        node_sizes.append(40)
-        node_borders.append(STATUS_COLORS[status])
-
-        # Concept nodes
-        for c in concepts:
-            status = _concept_status(c)
-            x, y   = positions[c]
-            node_x.append(x); node_y.append(y)
-            short_c = (c[:14] + "...") if len(c) > 14 else c
-            node_text.append(short_c)
-            nbrs    = list(G.successors(c)) + list(G.predecessors(c))
-            nbrs    = [b for b in nbrs if b in positions]
-            rel     = G.nodes[c].get("node_type", "concept")
-            gap_tag = " [GAP]" if c in gaps else ""
-            node_hover.append(
-                f"<b>{c}</b>{gap_tag}<br>"
-                f"Type: {rel}<br>"
-                f"Connected to: {', '.join(nbrs[:3])}" + ("..." if len(nbrs) > 3 else "")
-            )
-            node_colors.append(STATUS_COLORS[status])
-            node_sizes.append(22)
-            node_borders.append("#FFFFFF" if c in gaps else TOPIC_COLORS.get(selected_topic, "#6C63FF"))
-
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(
-            x=edge_x, y=edge_y, mode="lines",
-            line=dict(width=1.0, color="rgba(255,255,255,0.08)"),
-            hoverinfo="none", showlegend=False,
-        ))
-        fig.add_trace(go.Scatter(
-            x=node_x, y=node_y, mode="markers+text",
-            text=node_text, textposition="top center",
-            textfont=dict(size=8, color="#FFFFFF"),
-            hovertext=node_hover, hoverinfo="text",
-            marker=dict(
-                size=node_sizes, color=node_colors,
-                line=dict(color=node_borders, width=1.8), opacity=0.92,
-            ),
-            showlegend=False,
-        ))
-        topic_color = TOPIC_COLORS.get(selected_topic, "#6C63FF")
-        fig.update_layout(
-            title=dict(
-                text=f"Concept Graph - {selected_topic}",
-                font=dict(size=14, color="#FFFFFF"), x=0.5,
-            ),
-            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False, range=[-1.1, 1.1]),
-            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False, range=[-1.1, 1.1]),
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor=f"rgba(14,14,30,0.4)",
-            height=420, margin=dict(l=10, r=10, t=45, b=10),
-            hoverlabel=dict(bgcolor="#1A1A3E", font_size=12, font_color="#FFFFFF",
-                            bordercolor=f"rgba({int(topic_color[1:3],16)},{int(topic_color[3:5],16)},{int(topic_color[5:7],16)},0.4)"),
-        )
-        return fig
-
-    except Exception as e:
+        tts = gTTS(text=clean, lang='en', slow=False)
+        buf = io.BytesIO()
+        tts.write_to_fp(buf)
+        buf.seek(0)
+        return buf.read()
+    except Exception:
         return None
 
+# ── Data ───────────────────────────────────────────────────────────────────────
+TOPICS = {
+    "🔗  Reverse Linked List": {
+        "topic": "linked_list", "operation": "reverse", "level": "beginner", "language": "python",
+        "nodes": [1, 2, 3, 4, 5],
+        "description": "Visualize in-place reversal of a singly linked list with prev/curr/next pointers.",
+        "tag": "Data Structures", "color": "#3b82f6",
+    },
+    "🔍  Binary Search": {
+        "topic": "binary_search", "operation": "search", "level": "beginner",
+        "array": [1, 3, 5, 7, 9, 11, 13, 15, 17, 19], "target": 13,
+        "description": "Step-by-step binary search with L/M/R pointers on a sorted array.",
+        "tag": "Algorithms", "color": "#22c55e",
+    },
+    "🌀  Recursion (Factorial)": {
+        "topic": "recursion", "operation": "factorial", "n": 5,
+        "description": "Animate the call stack as factorial(n) expands and returns.",
+        "tag": "Recursion", "color": "#a855f7",
+    },
+    "🌀  Recursion (Fibonacci)": {
+        "topic": "recursion", "operation": "fibonacci", "n": 5,
+        "description": "Trace the fibonacci call stack step by step.",
+        "tag": "Recursion", "color": "#a855f7",
+    },
+    "👁️  Transformer Attention": {
+        "topic": "transformer", "operation": "attention", "sentence": "The cat sat on the mat",
+        "description": "Visualize self-attention: tokens → embeddings → Q/K/V → attention heatmap.",
+        "tag": "GenAI", "color": "#ec4899",
+    },
+    "🧠  Neural Network": {
+        "topic": "neural_network", "operation": "forward", "architecture": [3, 5, 4, 2],
+        "inputs": ["x₁", "x₂", "x₃"],
+        "description": "Forward propagation through input → hidden → output layers.",
+        "tag": "Deep Learning", "color": "#f59e0b",
+    },
+    "📚  RAG Pipeline": {
+        "topic": "rag_pipeline", "operation": "retrieve", "query": "What is retrieval-augmented generation?",
+        "description": "Animate the full RAG pipeline: Query → Embed → Search → Retrieve → LLM → Answer.",
+        "tag": "GenAI", "color": "#14b8a6",
+    },
+}
 
-# ---------------------------------------------------------------------------
-# Bar and Radar charts
-# ---------------------------------------------------------------------------
-
-def _build_bar(user_progress: dict) -> go.Figure:
-    topics, masteries, colors = [], [], []
-    for t in ALL_TOPICS:
-        m = user_progress.get(t, {}).get("mastery", 0)
-        if m > 0:
-            topics.append(t)
-            masteries.append(m)
-            colors.append("#8B83FF" if m >= 76 else "#F39C12" if m >= 43 else "#2ECC71")
-    if not topics:
-        return None
-    fig = go.Figure()
-    fig.add_trace(go.Bar(
-        y=topics, x=masteries, orientation="h",
-        marker=dict(color=colors, cornerradius=4),
-        text=[f"{m}%" for m in masteries], textposition="outside",
-        textfont=dict(color="#A0A0C0", size=10),
-    ))
-    fig.update_layout(
-        title=dict(text="Mastery by Topic", font=dict(size=14, color="#FFFFFF"), x=0.5),
-        xaxis=dict(range=[0, 115], gridcolor="rgba(255,255,255,0.03)",
-                   tickfont=dict(color="#6B6B8D"), title=None),
-        yaxis=dict(tickfont=dict(color="#A0A0C0", size=9), title=None),
-        paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-        height=380, margin=dict(l=5, r=12, t=45, b=12), showlegend=False,
-    )
-    return fig
-
-
-def _build_radar(user_progress: dict) -> go.Figure:
-    masteries = [user_progress.get(t, {}).get("mastery", 0) for t in ALL_TOPICS]
-    fig = go.Figure()
-    fig.add_trace(go.Scatterpolar(
-        r=masteries + [masteries[0]], theta=ALL_TOPICS + [ALL_TOPICS[0]],
-        fill="toself", fillcolor="rgba(108,99,255,0.12)",
-        line=dict(color="#6C63FF", width=2), marker=dict(size=6, color="#8B83FF"),
-    ))
-    fig.update_layout(
-        polar=dict(
-            bgcolor="rgba(0,0,0,0)",
-            radialaxis=dict(visible=True, range=[0, 100],
-                            gridcolor="rgba(255,255,255,0.05)",
-                            linecolor="rgba(255,255,255,0.08)",
-                            tickfont=dict(size=8, color="#6B6B8D")),
-            angularaxis=dict(gridcolor="rgba(255,255,255,0.05)",
-                             linecolor="rgba(255,255,255,0.08)",
-                             tickfont=dict(size=9, color="#A0A0C0")),
-        ),
-        title=dict(text="Skill Radar", font=dict(size=14, color="#FFFFFF"), x=0.5),
-        showlegend=False,
-        paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-        height=360, margin=dict(l=55, r=55, t=45, b=25),
-    )
-    return fig
-
-
-# ---------------------------------------------------------------------------
-# Main render
-# ---------------------------------------------------------------------------
+TAG_COLORS = {
+    "Data Structures": "#E0E7FF",
+    "Algorithms": "#DCFCE7",
+    "Recursion": "#F3E8FF",
+    "GenAI": "#FCE7F3",
+    "Deep Learning": "#FEF3C7",
+}
+TAG_TEXT_COLORS = {
+    "Data Structures": "#3730A3",
+    "Algorithms": "#166534",
+    "Recursion": "#6B21A8",
+    "GenAI": "#9D174D",
+    "Deep Learning": "#92400E",
+}
 
 def render_visualizer():
-    username      = st.session_state.username
-    user_progress = get_user_progress(username)
-    stats         = get_overall_stats(username)
+    # ── Session state ──────────────────────────────────────────────────────────────
+    if "vis_frames" not in st.session_state:
+        st.session_state.vis_frames = []
+    if "vis_current_frame" not in st.session_state:
+        st.session_state.vis_current_frame = 0
+    if "vis_playing" not in st.session_state:
+        st.session_state.vis_playing = False
+    if "vis_generated" not in st.session_state:
+        st.session_state.vis_generated = False
+    
+    # Check for direct-entry topic selection (from Topics page)
+    default_concept_idx = 0
+    direct_entry = st.session_state.get("direct_visualizer_topic", None)
+    topic_keys = list(TOPICS.keys())
+    if direct_entry:
+        for idx, k in enumerate(topic_keys):
+            if TOPICS[k]["topic"] == direct_entry:
+                default_concept_idx = idx
+                break
 
-    st.markdown(
-        """
-<div class="main-header fade-in">
-    <h1>Knowledge Visualizer</h1>
-    <p>Explore your learning graph and mastery patterns</p>
-</div>
-""",
-        unsafe_allow_html=True,
-    )
+    # ── Header / Focus Mode ────────────────────────────────────────────────────────
+    head_col1, head_col2 = st.columns([3, 1])
+    with head_col1:
+        st.markdown("""
+        <div style="background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--radius-sm); padding:1.5rem; margin-bottom:1.5rem; box-shadow:var(--shadow-sm);">
+          <h1 style="margin-top:0; font-size:2rem; font-weight:800; color:var(--text-primary); margin-bottom:0.2rem;">Visual Engine Studio</h1>
+          <p style="color:var(--text-secondary); margin-bottom:0; font-size:0.95rem;">Interactive concept player and step-by-step breakdown.</p>
+        </div>
+        """, unsafe_allow_html=True)
+    with head_col2:
+        st.write("")
+        focus_label = "🔍 Exit Focus" if st.session_state.get("focus_mode") else "🎯 Focus Mode"
+        if st.button(focus_label, use_container_width=True, key="focus_vis"):
+            st.session_state.focus_mode = not st.session_state.get("focus_mode", False)
+            st.rerun()
 
-    # Stats row
-    sc1, sc2, sc3, sc4 = st.columns(4)
-    for col, (val, label) in zip(
-        [sc1, sc2, sc3, sc4],
-        [
-            (stats["total_topics_attempted"], "Topics Explored"),
-            (f"{stats['average_mastery']}%",  "Avg Mastery"),
-            (stats["completed_topics"],        "Completed"),
-            (stats["total_sessions"],          "Sessions"),
-        ],
-    ):
-        with col:
-            st.markdown(
-                f'<div class="stat-card"><div class="stat-value">{val}</div>'
-                f'<div class="stat-label">{label}</div></div>',
-                unsafe_allow_html=True,
+    # ── Flow Tabs ─────────────────────────────────────────────────────────────────
+    tab_int, tab_brk, tab_ex, tab_qz = st.tabs(["💡 Intuition", "🎬 Breakdown (Studio)", "📝 Example", "❓ Quiz"])
+
+    with tab_brk:
+        col_cfg, col_main = st.columns([1, 2.5])
+
+        with col_cfg:
+            st.markdown("#### 📖 Select Concept")
+            selected_label = st.selectbox(
+                "Concept",
+                topic_keys,
+                index=default_concept_idx,
+                label_visibility="collapsed",
             )
+            cfg = TOPICS[selected_label]
 
-    st.markdown("<br>", unsafe_allow_html=True)
+            tag_bg = TAG_COLORS.get(cfg["tag"], "var(--bg-elevated)")
+            tag_text = TAG_TEXT_COLORS.get(cfg["tag"], "var(--text-primary)")
 
-    # ── GraphRAG concept graph ─────────────────────────────────────────────────
-    st.markdown(
-        '<div style="font-weight:700;color:#FFFFFF;font-size:1rem;margin-bottom:0.5rem;">Concept Graph (GraphRAG)</div>',
-        unsafe_allow_html=True,
-    )
+            st.markdown(f"""
+            <div style='background:{tag_bg}; border-radius:var(--radius-sm); padding:0.9rem; margin:0.5rem 0 1rem 0; font-size:0.85rem; color:{tag_text}; line-height:1.5; border: 1px solid var(--border);'>
+                <b style='color:{tag_text}; font-size: 1rem;'>{selected_label.strip()}</b><br>
+                {cfg["description"]}
+            </div>
+            """, unsafe_allow_html=True)
 
-    # Topic selector for concept graph
-    selected_topics = st.session_state.get("selected_topics", [])
-    topic_options   = selected_topics if selected_topics else ALL_TOPICS
-    chosen_topic    = st.selectbox(
-        "Select topic to explore concepts",
-        topic_options,
-        key="viz_topic_selector",
-        label_visibility="collapsed",
-    )
+            with st.expander("⚙️ Playback Settings", expanded=False):
+                speed = st.slider("Frame Speed (sec)", min_value=3.0, max_value=12.0, value=5.0, step=0.5)
+                fade_steps = st.slider("Transition steps", min_value=3, max_value=14, value=8, step=1)
+                loop = st.checkbox("🔁 Loop animation", value=False)
+                enable_tts = st.checkbox("🔊 Voice narration (gTTS)", value=True)
 
-    # Concept graph legend
-    st.markdown(
-        """
-<div style="display:flex;gap:1.2rem;flex-wrap:wrap;margin-bottom:0.6rem;
-            padding:0.5rem 0.9rem;background:rgba(255,255,255,0.02);
-            border-radius:9px;border:1px solid rgba(255,255,255,0.04);">
-    <span style="color:#6B6B8D;font-size:0.72rem;font-weight:600;align-self:center;">Concept Status:</span>
-    <span style="color:#2ECC71;font-size:0.75rem;">Mastered</span>
-    <span style="color:#F39C12;font-size:0.75rem;">Partial</span>
-    <span style="color:#E74C3C;font-size:0.75rem;">Knowledge Gap</span>
-    <span style="color:#6B6B8D;font-size:0.75rem;">Not Assessed</span>
-    <span style="color:#A0A0C0;font-size:0.75rem;margin-left:0.8rem;">Centre = Topic | Outer = Concepts</span>
-</div>
-""",
-        unsafe_allow_html=True,
-    )
+            if st.button("▶  Generate & Animate", key="gen_btn", use_container_width=True, type="primary"):
+                with st.spinner("Generating visualization…"):
+                    raw_frames = generate_visualization(cfg)
+                    if enable_tts:
+                        for f in raw_frames:
+                            f["audio"] = generate_tts_audio(f.get("caption", ""))
+                    st.session_state.vis_frames = raw_frames
+                    st.session_state.vis_current_frame = 0
+                    st.session_state.vis_playing = True
+                    st.session_state.vis_generated = True
+                    st.session_state.vis_tts_enabled = enable_tts
 
-    concept_fig = _build_concept_graph(chosen_topic, user_progress)
-    if concept_fig:
-        st.plotly_chart(concept_fig, use_container_width=True)
-    else:
-        st.info("Concept graph not available. Ensure the knowledge graph JSON is loaded correctly.")
+            if st.session_state.vis_generated and st.session_state.vis_frames:
+                col_p, col_r = st.columns(2)
+                with col_p:
+                    if st.button("⏸ Pause", use_container_width=True):
+                        st.session_state.vis_playing = False
+                with col_r:
+                    if st.button("↺ Reset", use_container_width=True):
+                        st.session_state.vis_current_frame = 0
+                        st.session_state.vis_playing = False
 
-    # ── Learning Path ──────────────────────────────────────────────────────────
-    topic_data = user_progress.get(chosen_topic, {})
-    gaps       = topic_data.get("knowledge_gaps", [])
-    if gaps:
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown(
-            '<div style="font-weight:600;color:#FFFFFF;font-size:0.9rem;margin-bottom:0.6rem;">Recommended Learning Path (GraphRAG)</div>',
-            unsafe_allow_html=True,
-        )
-        try:
-            from backend.graph_rag import get_gap_recommendations
-            recs = get_gap_recommendations(gaps[:3], chosen_topic)
-            for rec in recs:
-                path_nodes = rec["path"]
-                path_html  = " &rarr; ".join(
-                    f'<span style="background:rgba(108,99,255,0.1);border:1px solid rgba(108,99,255,0.2);'
-                    f'border-radius:5px;padding:0.1rem 0.45rem;color:#8B83FF;font-size:0.75rem;">{p}</span>'
-                    for p in path_nodes
-                )
-                st.markdown(
-                    f'<div style="padding:0.55rem 0.9rem;margin-bottom:0.4rem;'
-                    f'background:rgba(243,156,18,0.05);border-radius:9px;'
-                    f'border-left:3px solid #F39C12;">'
-                    f'<div style="color:#F39C12;font-size:0.75rem;font-weight:600;margin-bottom:0.25rem;">Gap: {rec["gap"]}</div>'
-                    f'<div>{path_html}</div>'
-                    f'<div style="color:#6B6B8D;font-size:0.68rem;margin-top:0.2rem;">{rec["recommendation"]}</div>'
-                    f"</div>",
+        with col_main:
+            frames = st.session_state.vis_frames
+            total_frames = len(frames)
+            cur = min(st.session_state.vis_current_frame, max(0, total_frames - 1))
+
+        frame_placeholder = st.empty()
+        caption_placeholder = st.empty()
+
+        if not st.session_state.vis_generated or not frames:
+            with frame_placeholder.container():
+                st.markdown("""
+                <div style='background:var(--bg-card); border:1px dashed var(--border); border-radius:12px;
+                            padding:4rem 2rem; text-align:center; min-height:400px;
+                            display:flex; flex-direction:column; align-items:center; justify-content:center;'>
+                    <div style='font-size:3.5rem; margin-bottom:1rem;'>🧠</div>
+                    <div style='font-size:1.2rem; font-weight:600; color:var(--text-primary); margin-bottom:0.5rem;'>
+                        Select a concept and click <span style="color:var(--primary)">▶ Generate & Animate</span>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+        else:
+            if st.session_state.vis_playing:
+                while st.session_state.vis_current_frame < total_frames:
+                    idx      = st.session_state.vis_current_frame
+                    frame    = frames[idx]
+                    step_num = idx + 1
+                    tts_on   = st.session_state.get("vis_tts_enabled") and frame.get("audio")
+                    caption  = frame.get("caption", "")
+
+                    img_ph = None
+                    with frame_placeholder.container():
+                        st.markdown(f'<div style="font-weight:600; color:var(--text-secondary); margin-bottom:10px;">Step {step_num} / {total_frames}</div>', unsafe_allow_html=True)
+                        img_ph = st.empty()
+                        img_ph.image(frame["image"], use_container_width=True)
+                        if tts_on:
+                            st.audio(frame["audio"], format="audio/mp3", autoplay=True)
+
+                    caption_placeholder.markdown(
+                        f'<div style="background:var(--bg-elevated); border-left:4px solid var(--primary); padding:15px; font-family:monospace; margin-top:15px; border-radius:var(--radius-sm); box-shadow:var(--shadow-sm); color:var(--text-primary);">{caption}</div>',
+                        unsafe_allow_html=True)
+
+                    if tts_on:
+                        hold_time = _estimate_tts_duration(caption)
+                    else:
+                        hold_time = max(1.0, speed)
+                    time.sleep(hold_time)
+
+                    st.session_state.vis_current_frame += 1
+                    done = st.session_state.vis_current_frame >= total_frames
+
+                    if done:
+                        if loop:
+                            st.session_state.vis_current_frame = 0
+                            done = False
+                        else:
+                            st.session_state.vis_playing = False
+
+                    if not done and img_ph is not None:
+                        next_frame = frames[st.session_state.vis_current_frame]
+                        try:
+                            blends = _crossfade_frames(frame["image"], next_frame["image"], steps=fade_steps)
+                            for blend_img in blends:
+                                img_ph.image(blend_img, use_container_width=True)
+                                time.sleep(0.12)
+                        except Exception:
+                            pass
+
+                    if st.session_state.vis_playing is False and not loop:
+                        break
+
+                st.rerun()
+            else:
+                frame = frames[min(cur, total_frames - 1)]
+                with frame_placeholder.container():
+                    st.markdown(f'<div style="font-weight:600; color:var(--text-secondary); margin-bottom:10px;">Step {cur + 1} / {total_frames}</div>', unsafe_allow_html=True)
+                    st.image(frame["image"], use_container_width=True)
+                    if st.session_state.get("vis_tts_enabled") and frame.get("audio"):
+                        st.audio(frame["audio"], format="audio/mp3", autoplay=True)
+
+                caption_placeholder.markdown(
+                    f'<div style="background:var(--bg-elevated); border-left:4px solid var(--primary); padding:15px; font-family:monospace; margin-top:15px; border-radius:var(--radius-sm); box-shadow:var(--shadow-sm); color:var(--text-primary);">{frame.get("caption", "")}</div>',
                     unsafe_allow_html=True,
                 )
-        except Exception:
-            pass
 
-    st.markdown("<br>", unsafe_allow_html=True)
+            # Player Timeline (Bottom)
+            if total_frames > 0:
+                st.markdown("<hr style='margin:1rem 0; border-color:var(--border);'>", unsafe_allow_html=True)
+                st.markdown(f"<div style='font-size:0.8rem; color:var(--text-secondary); margin-bottom:0.3rem;'>Timeline (Step {cur + 1} of {total_frames})</div>", unsafe_allow_html=True)
+                # We can use a slider as a scrubber
+                new_frame = st.slider("Scrubber", min_value=1, max_value=total_frames, value=cur + 1, label_visibility="collapsed")
+                if new_frame - 1 != cur:
+                    st.session_state.vis_current_frame = new_frame - 1
+                    st.session_state.vis_playing = False
+                    st.rerun()
 
-    # ── Topic-level knowledge graph ────────────────────────────────────────────
-    st.markdown(
-        '<div style="font-weight:700;color:#FFFFFF;font-size:1rem;margin-bottom:0.5rem;">Topic-Level Knowledge Graph</div>',
-        unsafe_allow_html=True,
-    )
-    st.markdown(
-        """
-<div style="display:flex;gap:1.2rem;flex-wrap:wrap;margin-bottom:0.6rem;
-            padding:0.5rem 0.9rem;background:rgba(255,255,255,0.02);
-            border-radius:9px;border:1px solid rgba(255,255,255,0.04);">
-    <span style="color:#6B6B8D;font-size:0.72rem;font-weight:600;align-self:center;">Node border = Level:</span>
-    <span style="color:#2ECC71;font-size:0.75rem;">Beginner</span>
-    <span style="color:#F39C12;font-size:0.75rem;">Intermediate</span>
-    <span style="color:#8B83FF;font-size:0.75rem;">Advanced</span>
-    <span style="color:#6B6B8D;font-size:0.75rem;">Not Assessed</span>
-    <span style="color:#A0A0C0;font-size:0.75rem;margin-left:0.8rem;">Node size = Mastery %</span>
-</div>
-""",
-        unsafe_allow_html=True,
-    )
-
-    if not user_progress:
-        st.info("Complete assessments to see your knowledge graph populated with mastery data.")
-
-    st.plotly_chart(_build_topic_graph(user_progress), use_container_width=True)
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    # ── Charts ─────────────────────────────────────────────────────────────────
-    tab_bar, tab_radar = st.tabs(["Mastery Bar Chart", "Skill Radar"])
-    with tab_bar:
-        fig_bar = _build_bar(user_progress)
-        if fig_bar:
-            st.plotly_chart(fig_bar, use_container_width=True)
-        else:
-            st.info("Complete assessments to see mastery levels.")
-    with tab_radar:
-        st.plotly_chart(_build_radar(user_progress), use_container_width=True)
-
-    # ── Detail table ────────────────────────────────────────────────────────────
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown(
-        '<div style="font-weight:700;color:#FFFFFF;font-size:0.95rem;margin-bottom:0.7rem;">Topic Detail View</div>',
-        unsafe_allow_html=True,
-    )
-    for topic in ALL_TOPICS:
-        data    = user_progress.get(topic, {})
-        mastery = data.get("mastery", 0)
-        level   = data.get("level", "Not Assessed")
-        gaps    = data.get("knowledge_gaps", [])
-        color   = TOPIC_COLORS.get(topic, "#6C63FF")
-        lc      = LEVEL_COLORS.get(level, "#6B6B8D")
-        gaps_html = " | ".join(
-            f"<span style='color:#F39C12;font-size:0.7rem;'>{g}</span>" for g in gaps[:3]
-        ) if gaps else "<span style='color:#6B6B8D;font-size:0.7rem;'>None detected</span>"
-
-        st.markdown(
-            f"""
-<div style="display:flex;align-items:center;gap:0.9rem;padding:0.5rem 0.9rem;
-            margin-bottom:0.25rem;background:rgba(20,20,46,0.5);border-radius:9px;
-            border-left:3px solid {color};">
-    <span style="color:{color};font-weight:700;min-width:38px;font-size:0.78rem;">{mastery}%</span>
-    <span style="color:#FFFFFF;font-weight:500;font-size:0.83rem;min-width:185px;">{topic}</span>
-    <div style="background:rgba(255,255,255,0.05);border-radius:3px;height:5px;
-                width:110px;overflow:hidden;flex-shrink:0;">
-        <div style="background:{color};width:{mastery}%;height:100%;border-radius:3px;"></div>
-    </div>
-    <span style="color:{lc};font-size:0.73rem;font-weight:600;min-width:86px;">{level}</span>
-    <div style="flex:1;">{gaps_html}</div>
-</div>
-""",
-            unsafe_allow_html=True,
-        )
-
-    # ── Graph stats panel ──────────────────────────────────────────────────────
-    st.markdown("<br>", unsafe_allow_html=True)
-    try:
-        from backend.knowledge_graph import get_graph_stats
-        gstats = get_graph_stats()
-        st.markdown(
-            f"""
-<div style="background:rgba(108,99,255,0.04);border:1px solid rgba(108,99,255,0.12);
-            border-radius:10px;padding:0.8rem 1.2rem;">
-    <div style="color:#8B83FF;font-weight:700;font-size:0.82rem;margin-bottom:0.5rem;">GraphRAG Knowledge Graph Statistics</div>
-    <div style="display:flex;gap:2rem;flex-wrap:wrap;">
-        <div><div style="color:#6B6B8D;font-size:0.65rem;">Total Nodes</div>
-             <div style="color:#FFFFFF;font-weight:700;">{gstats["total_nodes"]}</div></div>
-        <div><div style="color:#6B6B8D;font-size:0.65rem;">Total Edges</div>
-             <div style="color:#FFFFFF;font-weight:700;">{gstats["total_edges"]}</div></div>
-        <div><div style="color:#6B6B8D;font-size:0.65rem;">Topic Nodes</div>
-             <div style="color:#FFFFFF;font-weight:700;">{gstats["num_topics"]}</div></div>
-        <div><div style="color:#6B6B8D;font-size:0.65rem;">Concept Nodes</div>
-             <div style="color:#FFFFFF;font-weight:700;">{gstats["num_concepts"]}</div></div>
-        <div><div style="color:#6B6B8D;font-size:0.65rem;">Is DAG</div>
-             <div style="color:{'#2ECC71' if gstats['is_dag'] else '#E74C3C'};font-weight:700;">{'Yes' if gstats['is_dag'] else 'No'}</div></div>
-        <div><div style="color:#6B6B8D;font-size:0.65rem;">Density</div>
-             <div style="color:#FFFFFF;font-weight:700;">{gstats["density"]}</div></div>
-    </div>
-</div>
-""",
-            unsafe_allow_html=True,
-        )
-    except Exception:
-        pass
+    with tab_int:
+        st.markdown(f"""
+        ### Intuition for **{topic_keys[default_concept_idx]}**
+        Before diving into the breakdown, build an intuitive understanding of why this concept matters.
+        
+        *Placeholder for high-level analogies and big-picture explanations.*
+        """)
+    with tab_ex:
+        st.markdown(f"""
+        ### Practical Example
+        How does **{topic_keys[default_concept_idx]}** look in real code?
+        
+        *Placeholder for interactive code snippets or case studies.*
+        """)
+    with tab_qz:
+        st.markdown(f"""
+        ### Quick Check
+        Let's test your understanding of the visual breakdown.
+        
+        *Placeholder for mini-assessment related to the visualization.*
+        """)

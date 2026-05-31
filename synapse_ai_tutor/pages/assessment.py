@@ -16,7 +16,8 @@ from backend.progress_tracker import (
 from backend.gap_detector import detect_knowledge_gaps as detect_gaps
 
 
-DIFF_COLORS = {"easy": "#2ECC71", "intermediate": "#F39C12", "hard": "#8B83FF"}
+# Hex values for inline styles — chosen for good contrast in both themes
+DIFF_COLORS = {"easy": "#059669", "intermediate": "#D97706", "hard": "#6366F1"}
 DIFF_LABELS = {"easy": "Easy  (1 pt)", "intermediate": "Intermediate  (2 pts)", "hard": "Hard  (3 pts)"}
 
 
@@ -54,20 +55,28 @@ def render_assessment():
         return
 
     # Header
-    st.markdown(f"""
-    <div class="main-header animate-fade-in">
-        <h1>Assessment</h1>
-        <p>Topic: <strong style="color:#00D2FF;">{topic}</strong></p>
-    </div>
-    """, unsafe_allow_html=True)
+    h_col1, h_col2 = st.columns([3, 1])
+    with h_col1:
+        st.markdown(f"""
+        <div class="main-header animate-fade-in" style="text-align:left; padding: 1rem 0;">
+            <h1 style="margin-bottom:0.2rem; font-size: 2rem;">Assessment</h1>
+            <p style="color:var(--text-secondary); margin:0;">Topic: <strong style="color:var(--primary);">{topic}</strong></p>
+        </div>
+        """, unsafe_allow_html=True)
+    with h_col2:
+        st.write("") # spacer
+        focus_label = "🔍 Exit Focus" if st.session_state.get("focus_mode") else "🎯 Focus Mode"
+        if st.button(focus_label, use_container_width=True, key="focus_assess"):
+            st.session_state.focus_mode = not st.session_state.get("focus_mode", False)
+            st.rerun()
 
     # Progress through multi-topic queue
     queue = st.session_state.get("topic_queue", [])
     q_idx = st.session_state.get("topic_queue_idx", 0)
     if len(queue) > 1:
         st.markdown(f"""
-        <div style="text-align:right;color:#6B6B8D;font-size:0.8rem;margin-bottom:0.5rem;">
-            Topic {q_idx+1} of {len(queue)}: assessing <strong style="color:#00D2FF;">{topic}</strong>
+        <div style="text-align:right;color:var(--text-secondary);font-size:0.8rem;margin-bottom:0.5rem;">
+            Topic {q_idx+1} of {len(queue)}: assessing <strong style="color:var(--primary);">{topic}</strong>
         </div>""", unsafe_allow_html=True)
 
     _ensure_assessment_questions(topic)
@@ -92,26 +101,26 @@ def _render_existing_profile(topic, username):
     lc = {"Beginner": "#2ECC71", "Intermediate": "#F39C12", "Advanced": "#8B83FF"}.get(level, "#A0A0C0")
 
     st.markdown(f"""
-    <div class="main-header animate-fade-in">
+    <div class="main-header animate-fade-in" style="text-align:left;">
         <h1>Assessment</h1>
-        <p>Topic: <strong style="color:#00D2FF;">{topic}</strong></p>
+        <p style="color:var(--text-secondary);">Topic: <strong style="color:var(--primary);">{topic}</strong></p>
     </div>
     """, unsafe_allow_html=True)
 
     st.markdown(f"""
     <div class="synapse-card animate-fade-in" style="text-align:center;padding:2rem;">
-        <div style="color:#A0A0C0;font-size:0.85rem;margin-bottom:0.8rem;">Previous Assessment Result</div>
+        <div style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:0.8rem;">Previous Assessment Result</div>
         <div style="display:flex;justify-content:center;gap:3rem;margin-bottom:1.5rem;">
             <div>
                 <div style="font-size:2.5rem;font-weight:800;color:{lc};">{score}/{max_score}</div>
-                <div style="color:#A0A0C0;font-size:0.8rem;">Score (raw)</div>
+                <div style="color:var(--text-secondary);font-size:0.8rem;">Score (raw)</div>
             </div>
             <div>
                 <div style="font-size:2.5rem;font-weight:800;color:{lc};">{mastery}%</div>
-                <div style="color:#A0A0C0;font-size:0.8rem;">Mastery</div>
+                <div style="color:var(--text-secondary);font-size:0.8rem;">Mastery</div>
             </div>
         </div>
-        <div style="display:inline-block;padding:0.4rem 1.2rem;border-radius:20px;
+        <div style="display:inline-block;padding:0.4rem 1.2rem;border-radius:var(--radius-pill);
                     background:rgba({_hex_to_rgb(lc)},0.15);border:1px solid rgba({_hex_to_rgb(lc)},0.3);
                     color:{lc};font-weight:700;font-size:1rem;">{level}</div>
     </div>
@@ -121,10 +130,10 @@ def _render_existing_profile(topic, username):
     if gaps:
         st.markdown("""
         <div class="gap-warning" style="margin-top:1rem;">
-            <div style="color:#F39C12;font-weight:600;margin-bottom:0.4rem;">Knowledge Gaps</div>
+            <div style="color:var(--warning);font-weight:600;margin-bottom:0.4rem;">Knowledge Gaps</div>
         """, unsafe_allow_html=True)
         for g in gaps[:6]:
-            st.markdown(f"<div style='color:#A0A0C0;font-size:0.85rem;margin:0.15rem 0;'>* {g}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='color:var(--text-secondary);font-size:0.85rem;margin:0.15rem 0;'>* {g}</div>", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
     else:
         st.success("No knowledge gaps detected for this topic.")
@@ -136,9 +145,9 @@ def _render_existing_profile(topic, username):
                 date_str = h.get("date", "")[:10]
                 st.markdown(f"""
                 <div style="display:flex;justify-content:space-between;padding:0.3rem 0.5rem;
-                            background:rgba(255,255,255,0.02);border-radius:6px;margin-bottom:0.2rem;">
-                    <span style="color:#A0A0C0;font-size:0.8rem;">Attempt {len(history)-i+1} &nbsp;({date_str})</span>
-                    <span style="color:#FFFFFF;font-size:0.8rem;font-weight:600;">{h.get('score',0)}/{h.get('max_score',30)} &nbsp;–&nbsp; {h.get('level','')}</span>
+                            background:var(--border-light);border-radius:var(--radius-sm);margin-bottom:0.2rem;">
+                    <span style="color:var(--text-secondary);font-size:0.8rem;">Attempt {len(history)-i+1} &nbsp;({date_str})</span>
+                    <span style="color:var(--text-primary);font-size:0.8rem;font-weight:600;">{h.get('score',0)}/{h.get('max_score',30)} &nbsp;–&nbsp; {h.get('level','')}</span>
                 </div>""", unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
@@ -268,19 +277,26 @@ def _render_questions(questions, topic):
                     st.session_state.assessment_complete = True
                     st.rerun()
 
-    # Question dot indicators
+    # Question timeline indicators
     st.markdown("<br>", unsafe_allow_html=True)
     ind_cols = st.columns(total)
     for i in range(total):
         with ind_cols[i]:
             if i == current_idx:
-                c, brd = DIFF_COLORS["easy" if i < 5 else "intermediate" if i < 10 else "hard"], "2px solid"
+                diff_key = "easy" if i < 5 else "intermediate" if i < 10 else "hard"
+                dot_bg  = DIFF_COLORS[diff_key]
+                dot_brd = f"2px solid {DIFF_COLORS[diff_key]}"
             elif st.session_state.assessment_answers[i] is not None:
-                c, brd = "rgba(46,204,113,0.4)", "1px solid #2ECC71"
+                dot_bg  = "rgba(5,150,105,0.35)"
+                dot_brd = "1.5px solid #059669"
             else:
-                c, brd = "rgba(255,255,255,0.05)", "1px solid rgba(255,255,255,0.1)"
-            st.markdown(f'<div style="width:100%;height:5px;background:{c};border-radius:3px;border:{brd};"></div>',
-                        unsafe_allow_html=True)
+                dot_bg  = "var(--border-light)"
+                dot_brd = "1px solid var(--border)"
+            st.markdown(
+                f'<div style="width:100%;height:5px;background:{dot_bg};'
+                f'border-radius:var(--radius-pill);border:{dot_brd};"></div>',
+                unsafe_allow_html=True
+            )
 
 
 def _compute_gaps_from_answers(answers, questions, username, topic) -> list:
@@ -332,31 +348,43 @@ def _render_results(topic, username):
     gaps = result.get("knowledge_gaps", [])
     per_diff = result.get("per_difficulty", {})
 
-    lc = {"Beginner": "#2ECC71", "Intermediate": "#F39C12", "Advanced": "#8B83FF"}.get(level, "#A0A0C0")
+    # Level color — semantic CSS variables
+    lc_map = {
+        "Beginner":     "var(--success)",
+        "Intermediate": "var(--warning)",
+        "Advanced":     "var(--primary)",
+    }
+    lc = lc_map.get(level, "var(--text-muted)")
     msg = {
-        "Beginner": "You're getting started! The tutor will teach from the ground up with clear explanations and analogies.",
+        "Beginner":     "You're getting started! The tutor will teach from the ground up with clear explanations and analogies.",
         "Intermediate": "Good foundation! The tutor will build with technical examples and practical applications.",
-        "Advanced": "Excellent mastery! The tutor will engage with advanced discussions and research-level insights."
+        "Advanced":     "Excellent mastery! The tutor will engage with advanced discussions and research-level insights.",
     }.get(level, "")
 
     st.markdown(f"""
     <div class="synapse-card animate-fade-in" style="text-align:center;padding:2.5rem;">
-        <h2 style="color:#FFFFFF;margin-bottom:0.5rem;">Assessment Complete!</h2>
-        <p style="color:#A0A0C0;margin-bottom:2rem;">Topic: <strong style="color:#00D2FF;">{topic}</strong></p>
+        <h2 style="margin-bottom:0.5rem;">Assessment Complete!</h2>
+        <p style="color:var(--text-secondary);margin-bottom:2rem;">
+            Topic: <strong style="color:var(--primary);">{topic}</strong>
+        </p>
         <div style="display:flex;justify-content:center;gap:3rem;margin-bottom:1.5rem;">
             <div>
-                <div style="font-size:2.8rem;font-weight:800;color:{lc};">{score}/{max_score}</div>
-                <div style="color:#A0A0C0;font-size:0.82rem;">Raw Score</div>
+                <div style="font-size:2.8rem;font-weight:800;color:{lc};
+                            font-family:'Outfit',sans-serif;">{score}/{max_score}</div>
+                <div style="color:var(--text-muted);font-size:0.82rem;">Raw Score</div>
             </div>
             <div>
-                <div style="font-size:2.8rem;font-weight:800;color:{lc};">{correct}/{total}</div>
-                <div style="color:#A0A0C0;font-size:0.82rem;">Correct</div>
+                <div style="font-size:2.8rem;font-weight:800;color:{lc};
+                            font-family:'Outfit',sans-serif;">{correct}/{total}</div>
+                <div style="color:var(--text-muted);font-size:0.82rem;">Correct</div>
             </div>
         </div>
-        <div style="display:inline-block;padding:0.5rem 1.5rem;border-radius:25px;
-                    background:rgba({_hex_to_rgb(lc)},0.15);border:1px solid rgba({_hex_to_rgb(lc)},0.3);
-                    color:{lc};font-weight:700;font-size:1.1rem;">{level}</div>
-        <p style="color:#A0A0C0;margin-top:1.2rem;font-size:0.9rem;max-width:480px;margin-left:auto;margin-right:auto;">{msg}</p>
+        <div style="display:inline-block;padding:0.4rem 1.25rem;
+                    border-radius:var(--radius-pill);background:var(--primary-alpha);
+                    border:1px solid var(--border);color:{lc};
+                    font-weight:700;font-size:1rem;">{level}</div>
+        <p style="color:var(--text-secondary);margin-top:1.2rem;font-size:0.875rem;
+                  max-width:480px;margin-left:auto;margin-right:auto;">{msg}</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -367,14 +395,17 @@ def _render_results(topic, username):
         for i, (diff, dc) in enumerate(per_diff.items()):
             if dc["total"] == 0:
                 continue
-            acc = int((dc["correct"] / dc["total"]) * 100)
-            dcolor = DIFF_COLORS.get(diff, "#A0A0C0")
+            acc    = int((dc["correct"] / dc["total"]) * 100)
+            dcolor = DIFF_COLORS.get(diff, "#94A3B8")
             with dcols[i]:
                 st.markdown(f"""
-                <div class="stat-card" style="border-color:rgba({_hex_to_rgb(dcolor)},0.2);">
-                    <div style="color:{dcolor};font-size:0.72rem;text-transform:uppercase;font-weight:700;margin-bottom:0.3rem;">{diff}</div>
-                    <div style="font-size:1.6rem;font-weight:800;color:{dcolor};">{dc['correct']}/{dc['total']}</div>
-                    <div style="color:#A0A0C0;font-size:0.75rem;">{acc}% accuracy</div>
+                <div class="stat-card">
+                    <div style="color:{dcolor};font-size:0.68rem;text-transform:uppercase;
+                                font-weight:700;margin-bottom:0.3rem;letter-spacing:0.06em;">{diff}</div>
+                    <div style="font-size:1.6rem;font-weight:800;color:{dcolor};
+                                font-family:'Outfit',sans-serif;">{dc['correct']}/{dc['total']}</div>
+                    <div style="color:var(--text-muted);font-size:0.75rem;
+                                margin-top:0.15rem;">{acc}% accuracy</div>
                 </div>""", unsafe_allow_html=True)
 
     # Knowledge gaps
@@ -382,10 +413,15 @@ def _render_results(topic, username):
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown("""
         <div class="gap-warning">
-            <div style="color:#F39C12;font-weight:600;margin-bottom:0.4rem;">Knowledge Gaps Detected</div>
+            <div style="color:var(--warning);font-weight:600;margin-bottom:0.4rem;">
+                Knowledge Gaps Detected
+            </div>
         """, unsafe_allow_html=True)
         for g in gaps:
-            st.markdown(f"<div style='color:#A0A0C0;font-size:0.85rem;margin:0.15rem 0;'>* {g}</div>", unsafe_allow_html=True)
+            st.markdown(
+                f"<div style='color:var(--text-secondary);font-size:0.85rem;margin:0.2rem 0;'>· {g}</div>",
+                unsafe_allow_html=True
+            )
         st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)

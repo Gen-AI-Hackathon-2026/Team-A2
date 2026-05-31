@@ -79,7 +79,7 @@ def render_chatbot():
         """
 <div class="main-header fade-in">
     <h1>AI Chatbot</h1>
-    <p>General learning assistant ΓÇö ask anything about AI, ML, and deep learning</p>
+    <p>General learning assistant — ask anything about AI, ML, and deep learning</p>
 </div>
 """,
         unsafe_allow_html=True,
@@ -261,8 +261,8 @@ def _render_chat_interface():
                                 unsafe_allow_html=True,
                             )
 
-    # ΓöÇΓöÇ Determine user input: typed text OR voice transcript ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
-    typed_input = st.chat_input("Ask anything about AI, ML, or your uploaded PDFΓÇª", key="chatbot_input")
+    # ── Determine user input: typed text OR voice transcript ──────────────
+    typed_input = st.chat_input("Ask anything about AI, ML, or your uploaded PDF...", key="chatbot_input")
     user_input  = typed_input or voice_transcript
 
     if user_input:

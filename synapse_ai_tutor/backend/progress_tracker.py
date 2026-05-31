@@ -8,25 +8,45 @@ import json
 import os
 from datetime import datetime
 
+from threading import Lock
+
 PROGRESS_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "progress.json")
+
+# Thread safety lock for concurrent JSON read-modify-write operations
+_PROGRESS_LOCK = Lock()
 
 
 def _load_progress() -> dict:
-    """Load progress data from JSON file."""
-    if os.path.exists(PROGRESS_FILE):
-        try:
-            with open(PROGRESS_FILE, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except (json.JSONDecodeError, IOError):
-            return {}
-    return {}
+    """Load progress data from JSON file in a thread-safe manner."""
+    with _PROGRESS_LOCK:
+        if os.path.exists(PROGRESS_FILE):
+            try:
+                with open(PROGRESS_FILE, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+            except (json.JSONDecodeError, IOError):
+                return {}
+        return {}
 
 
 def _save_progress(data: dict):
-    """Save progress data to JSON file."""
-    os.makedirs(os.path.dirname(PROGRESS_FILE), exist_ok=True)
-    with open(PROGRESS_FILE, 'w', encoding='utf-8') as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
+    """Save progress data to JSON file in a thread-safe, durable manner."""
+    with _PROGRESS_LOCK:
+        temp_dir = os.path.dirname(PROGRESS_FILE)
+        os.makedirs(temp_dir, exist_ok=True)
+        
+        # Write atomically using a temporary file to avoid partial writes on crashes
+        import tempfile
+        fd, temp_path = tempfile.mkstemp(dir=temp_dir, suffix=".tmp")
+        try:
+            with os.fdopen(fd, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+            os.replace(temp_path, PROGRESS_FILE)
+        except Exception:
+            try:
+                os.unlink(temp_path)
+            except OSError:
+                pass
+            raise
 
 
 def _default_topic_data() -> dict:

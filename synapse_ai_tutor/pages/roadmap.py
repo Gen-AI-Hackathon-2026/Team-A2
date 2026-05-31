@@ -203,17 +203,30 @@ def _sid(name: str) -> str:
     return name.lower().replace(" ", "_").replace("&", "and").replace("/", "_").replace("(", "").replace(")", "").replace(",", "")
 
 
+def _read_static(path: str) -> str:
+    """Read a static JS file for inlining. Returns empty string on failure."""
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            return f.read()
+    except Exception:
+        return ''
+
+
 # ── Cytoscape HTML ────────────────────────────────────────────────────────────
 
 def _generate_roadmap_html(tree: dict, topic: str) -> str:
+    import os
     elements = [{"data": n} for n in tree["nodes"]] + [{"data": e} for e in tree["edges"]]
     ejs = json.dumps(elements)
 
+    # Read inlined JS libraries
+    static_dir = os.path.join(os.path.dirname(__file__), "..", "static")
+    cyto_js = _read_static(os.path.join(static_dir, "cytoscape.min.js"))
+    dagre_js = _read_static(os.path.join(static_dir, "dagre.min.js"))
+    cyto_dagre_js = _read_static(os.path.join(static_dir, "cytoscape-dagre.js"))
+
     return f"""<!DOCTYPE html>
 <html><head><meta charset="utf-8">
-<script src="https://unpkg.com/cytoscape@3.28.1/dist/cytoscape.min.js"></script>
-<script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
-<script src="https://unpkg.com/cytoscape-dagre@2.5.0/cytoscape-dagre.js"></script>
 <style>
 *{{margin:0;padding:0;box-sizing:border-box}}
 body{{background:#0A0A1A;overflow:hidden;font-family:'Inter',-apple-system,sans-serif}}
@@ -225,6 +238,9 @@ body{{background:#0A0A1A;overflow:hidden;font-family:'Inter',-apple-system,sans-
     backdrop-filter:blur(8px)}}
 </style></head><body>
 <div style="position:relative"><div id="cy"></div><div id="tt"></div></div>
+<script>{cyto_js}</script>
+<script>{dagre_js}</script>
+<script>{cyto_dagre_js}</script>
 <script>
 var cy=cytoscape({{
   container:document.getElementById('cy'),
