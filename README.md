@@ -43,10 +43,10 @@ interactive algorithm visualisation engine.
 4. Generates personalised tutoring responses via a GPT-class LLM (Ollama)
 5. Tracks mastery over time with a progress dashboard and visualiser
 
-The **Visual Engine** is a companion Streamlit app that animates classic
+The **Visual Engine** is a companion Streamlit appilcation that animates classic
 algorithms (neural networks, transformers, RAG pipelines, linked lists, binary
 search, recursion) step by step with optional text-to-speech narration.
-
+Additionally, LLM api keys are utilise to generate and visualise concepts outside of the knowledge.
 ---
 
 ## Architecture
