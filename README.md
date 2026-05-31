@@ -61,7 +61,7 @@ The architecture consists of six primary layers:
 5. **Knowledge Layer (GraphRAG)**: Retrieves educational context via Query Embedding, FAISS Vector Search, Knowledge Graph Expansion, and Reranking, powered by local LLM reasoning.
 6. **Learning Analytics**: Tracks concept-wise mastery, recommends learning paths, and builds a continuous feedback loop.
 
-![Synapse Architecture](assets/architecture.png)
+![Synapse Architecture](assets/architecture.jpg)
 
 ---
 
