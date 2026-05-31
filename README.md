@@ -1,10 +1,11 @@
-# Synapse - Adaptive AI Tutor
+# Synapse – Adaptive AI Tutor
 
 > A premium, multi-modal Adaptive AI Tutoring System combining GraphRAG, local LLMs, and dynamic visual engines for a highly personalized learning experience.
 
 The **Synapse Suite** is a unified product console that delivers an adaptive learning experience. It diagnoses knowledge gaps, adapts explanations to the student's proficiency level, visualizes complex concepts step-by-step, and personalizes the learning journey dynamically.
 
 ## Problem It Solves
+
 Traditional education platforms offer one-size-fits-all content that doesn't adapt to individual learning paces or missing prerequisites. Synapse solves this by dynamically diagnosing each learner's exact knowledge gaps using a GraphRAG-powered Knowledge Graph, adapting its teaching policy in real-time (Beginner/Intermediate/Expert), and providing hands-free, voice-enabled multi-modal interactions alongside step-by-step interactive algorithm visualizations.
 
 ---
@@ -18,13 +19,9 @@ Traditional education platforms offer one-size-fits-all content that doesn't ada
 ---
 
 ## Table of Contents
-
-- [Project Overview](#project-overview)
-- [Architecture](#architecture)
-- [Repository Structure](#repository-structure)
-- [Apps](#apps)
-  - [Synapse AI Tutor](#1-synapse-ai-tutor)
-  - [Visual Engine](#2-visual-engine)
+- [Features](#features)
+- [System Architecture](#system-architecture)
+- [Demo / Screenshots](#demo--screenshots)
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
 - [Installation & Setup](#installation--setup)
@@ -39,124 +36,39 @@ Traditional education platforms offer one-size-fits-all content that doesn't ada
 
 ---
 
-## Project Overview
+## Features
 
-**Synapse AI Tutor** is an end-to-end adaptive learning system that:
+### Key Functionalities
+- **GraphRAG Retrieval**: Hybrid Knowledge Graph-expanded vector retrieval leveraging FAISS and NetworkX to boost relevant learning chunks.
+- **Adaptive Assessment**: 15-question dynamic diagnostics that determine proficiency (Beginner, Intermediate, Advanced) and detect local knowledge gaps.
+- **Visual Animation Engine**: Standalone visualizer that illustrates intricate structures (Transformer Attention, Neural Networks, Binary Search, Recursion) step-by-step with synchronized audio narration (gTTS) and PIL crossfades.
+- **Local Voice Layer**: Zero-friction hands-free learning using local speech-to-text and text-to-speech technologies.
+- **Offline Cytoscape Roadmaps**: Dynamically generated, completely offline learning tree layouts.
+- **Premium Frosted Glassmorphism UI**: High-fidelity, dynamic frontend design built natively with HTML/CSS integrated into a Streamlit environment.
 
-1. Assesses a student's knowledge level per topic (Beginner / Intermediate / Advanced)
-2. Detects knowledge gaps using a NetworkX knowledge graph
-3. Retrieves relevant textbook content using **GraphRAG** — graph-expanded FAISS retrieval
-4. Generates personalised tutoring responses via a GPT-class LLM (Ollama)
-5. Tracks mastery over time with a progress dashboard and visualiser
-
-The **Visual Engine** is a companion Streamlit app that animates classic
-algorithms (neural networks, transformers, RAG pipelines, linked lists, binary
-search, recursion) step by step with optional text-to-speech narration.
-
----
-
-## Architecture
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                    Synapse AI Tutor                     │
-│                                                         │
-│  ┌──────────┐  ┌────────────┐  ┌────────────────────┐  │
-│  │  Login   │  │  Topics    │  │    Assessment      │  │
-│  └──────────┘  └────────────┘  └────────────────────┘  │
-│                                                         │
-│  ┌──────────────────────────────────────────────────┐   │
-│  │              GraphRAG Pipeline                   │   │
-│  │  Question → Graph Expansion → FAISS → Rerank     │   │
-│  └──────────────────────────────────────────────────┘   │
-│                                                         │
-│  ┌──────────┐  ┌────────────┐  ┌────────────────────┐  │
-│  │  Tutor   │  │  Chatbot   │  │    Visualizer      │  │
-│  └──────────┘  └────────────┘  └────────────────────┘  │
-│                                                         │
-│  ┌──────────┐  ┌────────────┐                          │
-│  │Dashboard │  │ Resources  │                          │
-│  └──────────┘  └────────────┘                          │
-└─────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────┐
-│                    Visual Engine                        │
-│  Neural Network · Transformer · RAG Pipeline            │
-│  Linked List · Binary Search · Recursion                │
-│  Step-by-step animation + TTS narration                 │
-└─────────────────────────────────────────────────────────┘
-```
+### Highlight Major Capabilities
+Synapse's true power lies in its **Student Intelligence Engine** and **Adaptive Tutoring Engine**. It builds a real-time mental model of the student, identifies specific prerequisites they are missing, and generates perfectly tailored explanations, analogies, and practice quizzes on the fly using a local LLM integration.
 
 ---
 
-## Repository Structure
+## System Architecture
 
-```
-Gen AI Hack/
-│
-├── README.md                          ← this file
-├── .gitignore
-│
-├── synapse_ai_tutor/                  ← Main learning platform
-│   ├── app.py                         ← Entry point, routing, global CSS
-│   ├── requirements.txt
-│   │
-│   ├── backend/
-│   │   ├── auth.py                    ← Authentication
-│   │   ├── assessment.py              ← Question loading, scoring
-│   │   ├── chunking.py                ← PDF → text chunks
-│   │   ├── embeddings.py              ← Sentence-transformer embeddings
-│   │   ├── rag.py                     ← RAGPipeline (FAISS + GraphRAG)
-│   │   ├── retriever.py               ← FAISS search
-│   │   ├── knowledge_graph.py         ← NetworkX graph, expand_query()
-│   │   ├── graph_rag.py               ← graph_rag_retrieve(), gap recs
-│   │   ├── gap_detector.py            ← Knowledge gap detection
-│   │   ├── llm_client.py              ← Ollama / GPT integration
-│   │   ├── progress_tracker.py        ← Per-user mastery tracking
-│   │   └── resources.py               ← Curated resource library
-│   │
-│   ├── pages/
-│   │   ├── login.py                   ← Login / signup
-│   │   ├── home.py                    ← Landing page
-│   │   ├── topic_selection.py         ← Topic picker with mastery badges
-│   │   ├── assessment.py              ← 15-question adaptive test
-│   │   ├── tutor.py                   ← GraphRAG-powered AI tutor chat
-│   │   ├── chatbot.py                 ← General AI chatbot + PDF upload
-│   │   ├── dashboard.py               ← Plotly progress dashboard
-│   │   ├── visualizer.py              ← Concept-level knowledge graph
-│   │   └── resources.py               ← Curated learning resources
-│   │
-│   └── data/
-│       ├── books/                     ← Source PDF textbooks
-│       ├── chunks.pkl                 ← Cached text chunks
-│       ├── faiss_index.bin            ← Cached FAISS vector index
-│       ├── knowledge_graph.json       ← GraphRAG graph definition
-│       └── progress.json              ← User progress store
-│
-└── visual_engine/                     ← Standalone visualisation app
-    ├── main.py                        ← Streamlit entry point
-    ├── router.py                      ← Visualisation dispatcher
-    ├── requirements.txt
-    ├── renderers/
-    │   └── graph_renderer.py          ← Graph drawing utilities
-    └── visualizers/
-        ├── neural_network.py
-        ├── transformer.py
-        ├── rag_pipeline.py
-        ├── linked_list.py
-        ├── binary_search.py
-        └── recursion.py
-```
+The architecture consists of six primary layers:
+1. **Interaction Layer**: Multi-modal inputs including Text Chat, Voice Input (Whisper STT), PDF/Image Upload, and a Progress Dashboard.
+2. **Query Understanding**: Extracts intent, topics, and concepts from the student's input.
+3. **Student Intelligence Engine**: Performs cognitive diagnosis to detect concept gaps, estimate student level (Beginner/Intermediate/Expert), and identify misconceptions.
+4. **Adaptive Tutoring Engine**: Uses a policy engine to decide *what* and *how* to teach, generating explanations, analogies, and auto-selecting visual animations.
+5. **Knowledge Layer (GraphRAG)**: Retrieves educational context via Query Embedding, FAISS Vector Search, Knowledge Graph Expansion, and Reranking, powered by local LLM reasoning.
+6. **Learning Analytics**: Tracks concept-wise mastery, recommends learning paths, and builds a continuous feedback loop.
+
+![Synapse Architecture](assets/architecture.png)
 
 ---
 
-## Demo / Screenshots (Placeholder Section)
+## Demo / Screenshots
 
 *Placeholder for demo links and screenshots.* 
 - [Link to Live Demo](#)
-
-### System Architecture
-![Synapse - Adaptive AI Tutor Architecture](assets/architecture.png)
 
 ### App Previews
 - **Screenshot 1**: `![Hub Workspace](assets/screenshot1.png)` - The premium Hub Workspace.
@@ -280,6 +192,7 @@ Once the app is running:
 ---
 
 ## Testing
+
 To verify the system components:
 1. **Knowledge Graph**: Check the knowledge graph structure using the in-app **Visualizer** page in the AI Tutor.
 2. **Retrieval Engine**: Run local diagnostics on the FAISS index by verifying chunk responses in the **Chatbot** page.
@@ -290,6 +203,7 @@ To verify the system components:
 ---
 
 ## Deployment
+
 Synapse is designed to be easily containerised. 
 1. Create a `Dockerfile` exposing ports `8501` (Tutor) and `8502` (Visual Engine).
 2. Host `index.html` via a lightweight static server (e.g., Nginx) that points iframes to the exposed Streamlit ports.
@@ -314,36 +228,16 @@ We welcome contributions to the Synapse Suite!
 
 ---
 
-## Dataset and Books
-
-The RAG pipeline is pre-indexed over three textbooks:
-
-| Book | Description |
-|---|---|
-| `Generative AI Foundations in Python.pdf` | Practical GenAI with Python |
-| `Hands-On Large Language Models.pdf` | LLM architecture and applications |
-| `Understanding Deep Learning.pdf` | Comprehensive deep learning theory |
-
-The assessment question bank uses `manus-dataset.jsonl` — a curated
-multiple-choice dataset covering all 10 topics at three difficulty levels.
+## Roadmap / Future Improvements
+- [ ] **Cloud Sync**: Centralized MongoDB for cross-device progress syncing.
+- [ ] **Expanded Visuals**: Add visualizers for CNNs, GANs, and Diffusion Models.
+- [ ] **Docker Compose**: Single-command orchestrated deployment.
+- [ ] **Multi-language Support**: Voice narration and LLM interaction in languages other than English.
 
 ---
 
-## Git Workflow
-
-```
-main
- ├── a5cb73e  initial commit
- ├── bd64131  update 1
- ├── eb1a366  added navigation bar on top
- ├── 036a724  Graphrag Added.
- ├── 1ee1a19  feat(visual-engine): add Visualization Engine subsystem  [merged from feature/visualization-engine]
- └── ce021c6  Merge feature/visualization-engine into main
-```
-
-**Branches:**
-- `main` — stable, production-ready
-- `feature/visualization-engine` — merged (Visual Engine subsystem)
+## License
+Distributed under the MIT License. See `LICENSE` for more information.
 
 ---
 
